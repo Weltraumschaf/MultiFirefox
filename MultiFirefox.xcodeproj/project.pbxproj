@@ -466,11 +466,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.CodeContortionist.MultiFirefoxTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefox.app/Contents/MacOS/MultiFirefox";
 			};
 			name = Debug;
@@ -482,11 +482,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.CodeContortionist.MultiFirefoxTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefox.app/Contents/MacOS/MultiFirefox";
 			};
 			name = Release;
