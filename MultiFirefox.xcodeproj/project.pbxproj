@@ -10,6 +10,7 @@
 		03FCE3050E78108F009723BE /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03FCE3040E78108F009723BE /* Sparkle.framework */; };
 		03FCE31B0E7810DF009723BE /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 03FCE3040E78108F009723BE /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		1C4C43CB2FABC57A00F80D88 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 1C4C43CA2FABC57A00F80D88 /* Sparkle */; };
+		AA000002AA000002AA000002 /* FirefoxManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AA000001AA000001 /* FirefoxManagerTests.swift */; };
 		5569ED0C0DB2C95900099182 /* INSTALL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 5569ED0B0DB2C95900099182 /* INSTALL.txt */; };
 		5571D1950DB2C840003F0FEA /* MITLicense.txt in Resources */ = {isa = PBXBuildFile; fileRef = 5571D1940DB2C840003F0FEA /* MITLicense.txt */; };
 		558BC9310DAE6E0300999EC4 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 558BC9300DAE6E0300999EC4 /* Credits.rtf */; };
@@ -28,13 +29,14 @@
 			dstPath = "";
 			dstSubfolder = Frameworks;
 			files = (
-				03FCE31B0E7810DF009723BE /* Sparkle.framework in CopyFiles */,
 			);
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		03FCE3040E78108F009723BE /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
+		AA000001AA000001AA000001 /* FirefoxManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirefoxManagerTests.swift; sourceTree = "<group>"; };
+		AA00000DAA00000DAA00000D /* MultiFirefoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MultiFirefoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 		1C0CABD22FA9FDB400E57B7A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -61,10 +63,24 @@
 			files = (
 				1C4C43CB2FABC57A00F80D88 /* Sparkle in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
-				03FCE3050E78108F009723BE /* Sparkle.framework in Frameworks */,
+			);
+		};
+		AA000004AA000004AA000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		AA00000BAA00000BAA00000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D1107260486CEB800E47090;
+			remoteInfo = MultiFirefox;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXGroup section */
 		080E96DDFE201D6D7F000001 /* Classes */ = {
@@ -100,8 +116,17 @@
 			isa = PBXGroup;
 			children = (
 				8D1107320486CEB800E47090 /* MultiFirefox.app */,
+				AA00000DAA00000DAA00000D /* MultiFirefoxTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AA00000AAA00000AAA00000A /* MultiFirefoxTests */ = {
+			isa = PBXGroup;
+			children = (
+				AA000001AA000001AA000001 /* FirefoxManagerTests.swift */,
+			);
+			path = MultiFirefoxTests;
 			sourceTree = "<group>";
 		};
 		29B97314FDCFA39411CA2CEA /* MultiFirefox */ = {
@@ -112,6 +137,7 @@
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
+				AA00000AAA00000AAA00000A /* MultiFirefoxTests */,
 			);
 			name = MultiFirefox;
 			sourceTree = "<group>";
@@ -180,6 +206,24 @@
 			productReference = 8D1107320486CEB800E47090 /* MultiFirefox.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AA000006AA000006AA000006 /* MultiFirefoxTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA000009AA000009AA000009 /* Build configuration list for PBXNativeTarget "MultiFirefoxTests" */;
+			buildPhases = (
+				AA000003AA000003AA000003 /* Sources */,
+				AA000004AA000004AA000004 /* Frameworks */,
+				AA000005AA000005AA000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA00000CAA00000CAA00000C /* PBXTargetDependency */,
+			);
+			name = MultiFirefoxTests;
+			productName = MultiFirefoxTests;
+			productReference = AA00000DAA00000DAA00000D /* MultiFirefoxTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -205,6 +249,7 @@
 			projectRoot = "";
 			targets = (
 				8D1107260486CEB800E47090 /* MultiFirefox */,
+				AA000006AA000006AA000006 /* MultiFirefoxTests */,
 			);
 		};
 /* End PBXProject section */
@@ -221,6 +266,11 @@
 				5569ED0C0DB2C95900099182 /* INSTALL.txt in Resources */,
 			);
 		};
+		AA000005AA000005AA000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -232,7 +282,21 @@
 				55B221DA0DAA6DB90093DE58 /* MFF.m in Sources */,
 			);
 		};
+		AA000003AA000003AA000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+				AA000002AA000002AA000002 /* FirefoxManagerTests.swift in Sources */,
+			);
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA00000CAA00000CAA00000C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8D1107260486CEB800E47090 /* MultiFirefox */;
+			targetProxy = AA00000BAA00000BAA00000B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		089C165CFE840E0CC02AAC07 /* InfoPlist.strings */ = {
@@ -395,6 +459,38 @@
 			};
 			name = Release;
 		};
+		AA000007AA000007AA000007 /* Debug configuration for PBXNativeTarget "MultiFirefoxTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.CodeContortionist.MultiFirefoxTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefox.app/Contents/MacOS/MultiFirefox";
+			};
+			name = Debug;
+		};
+		AA000008AA000008AA000008 /* Release configuration for PBXNativeTarget "MultiFirefoxTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.CodeContortionist.MultiFirefoxTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefox.app/Contents/MacOS/MultiFirefox";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -403,6 +499,14 @@
 			buildConfigurations = (
 				C01FCF4B08A954540054247B /* Debug configuration for PBXNativeTarget "MultiFirefox" */,
 				C01FCF4C08A954540054247B /* Release configuration for PBXNativeTarget "MultiFirefox" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		AA000009AA000009AA000009 /* Build configuration list for PBXNativeTarget "MultiFirefoxTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000007AA000007AA000007 /* Debug configuration for PBXNativeTarget "MultiFirefoxTests" */,
+				AA000008AA000008AA000008 /* Release configuration for PBXNativeTarget "MultiFirefoxTests" */,
 			);
 			defaultConfigurationName = Release;
 		};
