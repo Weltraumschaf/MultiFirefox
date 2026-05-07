@@ -44,4 +44,35 @@ final class FirefoxManagerTests: XCTestCase {
         let input = ["Firefox 90.app", "Firefox 120.app", "Minefield.app"]
         XCTAssertEqual(FirefoxManager.filterVersions(from: input), ["Firefox 120", "Firefox 90", "Minefield"])
     }
+
+    func testBuildAppBundleCreatesExpectedFiles() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        FirefoxManager.buildAppBundle(version: "Firefox 120", profile: "Work", in: tempDir)
+
+        let appDir = tempDir.appendingPathComponent("Firefox 120-Work.app")
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: appDir.appendingPathComponent("Contents/MacOS/launcher").path))
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: appDir.appendingPathComponent("Contents/Info.plist").path))
+    }
+
+    func testBuildAppBundleLauncherContainsVersionAndProfile() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        FirefoxManager.buildAppBundle(version: "Firefox 120", profile: "Work", in: tempDir)
+
+        let launcherURL = tempDir
+            .appendingPathComponent("Firefox 120-Work.app/Contents/MacOS/launcher")
+        let content = try String(contentsOf: launcherURL)
+        XCTAssertTrue(content.hasPrefix("#!/bin/bash"))
+        XCTAssertTrue(content.contains("Firefox 120"))
+        XCTAssertTrue(content.contains("Work"))
+    }
 }
