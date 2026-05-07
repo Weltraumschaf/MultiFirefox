@@ -18,6 +18,32 @@ struct ContentView: View {
             buttonBar
         }
         .frame(minWidth: 440, minHeight: 270)
+        .onAppear {
+            restoreSelection()
+            if manager.profiles.count < 2, !manager.versions.isEmpty {
+                showingProfileWarning = true
+            }
+        }
+        .onChange(of: selectedVersion) { newVersion in
+            guard let newVersion else { return }
+            autoSelectProfile(for: newVersion)
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+        ) { _ in
+            guard needsProfileReload else { return }
+            let previous = selectedProfile
+            manager.reloadProfiles()
+            selectedProfile = (previous.flatMap { manager.profiles.contains($0) ? $0 : nil })
+                ?? manager.profiles.first
+            needsProfileReload = false
+        }
+        .alert("You need to create a profile!", isPresented: $showingProfileWarning) {
+            Button("Open Profile Manager") { openProfileManager() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You only have one profile set up for Firefox. To run multiple versions side by side, you must have multiple profiles defined.")
+        }
     }
 
     private var versionList: some View {
@@ -84,5 +110,23 @@ struct ContentView: View {
     private func createApp() {
         guard let version = selectedVersion, let profile = selectedProfile else { return }
         manager.createApplication(version: version, profile: profile)
+    }
+
+    private func restoreSelection() {
+        let lastVersion = UserDefaults.standard.string(forKey: "lastVersion")
+        let lastProfile = UserDefaults.standard.string(forKey: "lastProfile")
+        selectedVersion = lastVersion.flatMap { manager.versions.contains($0) ? $0 : nil }
+            ?? manager.versions.first
+        selectedProfile = lastProfile.flatMap { manager.profiles.contains($0) ? $0 : nil }
+            ?? manager.profiles.first
+    }
+
+    private func autoSelectProfile(for version: String) {
+        let isPlain = version.lowercased() == "firefox"
+        if isPlain, let def = manager.profiles.first(where: { $0 == "default" }) {
+            selectedProfile = def
+            return
+        }
+        selectedProfile = manager.profiles.first
     }
 }
