@@ -21,4 +21,27 @@ final class FirefoxManagerTests: XCTestCase {
     func testParseProfilesReturnsEmptyForEmptyInput() {
         XCTAssertEqual(FirefoxManager.parseProfiles(from: ""), [])
     }
+
+    func testIsFirefoxAppAcceptsFirefoxVariants() {
+        XCTAssertTrue(FirefoxManager.isFirefoxApp("Firefox 120.app"))
+        XCTAssertTrue(FirefoxManager.isFirefoxApp("Firefox.app"))
+        XCTAssertTrue(FirefoxManager.isFirefoxApp("firefox.app"))
+        XCTAssertTrue(FirefoxManager.isFirefoxApp("Minefield.app"))
+    }
+
+    func testIsFirefoxAppRejectsNonFirefox() {
+        XCTAssertFalse(FirefoxManager.isFirefoxApp("Safari.app"))
+        XCTAssertFalse(FirefoxManager.isFirefoxApp("Firefox Folder"))
+        XCTAssertFalse(FirefoxManager.isFirefoxApp("NotFirefox.app"))
+    }
+
+    func testFilterVersionsStripsAppSuffixAndFilters() {
+        let input = ["Firefox 120.app", "Safari.app", "Firefox.app", "Chrome.app"]
+        XCTAssertEqual(FirefoxManager.filterVersions(from: input), ["Firefox", "Firefox 120"])
+    }
+
+    func testFilterVersionsSortsCaseInsensitively() {
+        let input = ["Firefox 90.app", "Firefox 120.app", "Minefield.app"]
+        XCTAssertEqual(FirefoxManager.filterVersions(from: input), ["Firefox 120", "Firefox 90", "Minefield"])
+    }
 }
