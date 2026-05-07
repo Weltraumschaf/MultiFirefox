@@ -12,6 +12,7 @@
 		1C4C43CB2FABC57A00F80D88 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 1C4C43CA2FABC57A00F80D88 /* Sparkle */; };
 		AA000002AA000002AA000002 /* FirefoxManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AA000001AA000001 /* FirefoxManagerTests.swift */; };
 		BB000002BB000002BB000002 /* FirefoxManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000001BB000001BB000001 /* FirefoxManager.swift */; };
+		CC000002CC000002CC000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CC000001CC000001 /* ContentView.swift */; };
 		5569ED0C0DB2C95900099182 /* INSTALL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 5569ED0B0DB2C95900099182 /* INSTALL.txt */; };
 		5571D1950DB2C840003F0FEA /* MITLicense.txt in Resources */ = {isa = PBXBuildFile; fileRef = 5571D1940DB2C840003F0FEA /* MITLicense.txt */; };
 		558BC9310DAE6E0300999EC4 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 558BC9300DAE6E0300999EC4 /* Credits.rtf */; };
@@ -38,6 +39,7 @@
 		03FCE3040E78108F009723BE /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		AA000001AA000001AA000001 /* FirefoxManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirefoxManagerTests.swift; sourceTree = "<group>"; };
 		BB000001BB000001BB000001 /* FirefoxManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FirefoxManager.swift; path = MultiFirefox/FirefoxManager.swift; sourceTree = "<group>"; };
+		CC000001CC000001CC000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = MultiFirefox/ContentView.swift; sourceTree = "<group>"; };
 		AA00000DAA00000DAA00000D /* MultiFirefoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MultiFirefoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
@@ -92,6 +94,7 @@
 				55B221D80DAA6DB90093DE58 /* MFF.h */,
 				55B221D90DAA6DB90093DE58 /* MFF.m */,
 				BB000001BB000001BB000001 /* FirefoxManager.swift */,
+				CC000001CC000001CC000001 /* ContentView.swift */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -284,6 +287,7 @@
 				55B221360DA9E3E90093DE58 /* MainWindow.m in Sources */,
 				55B221DA0DAA6DB90093DE58 /* MFF.m in Sources */,
 				BB000002BB000002BB000002 /* FirefoxManager.swift in Sources */,
+				CC000002CC000002CC000002 /* ContentView.swift in Sources */,
 			);
 		};
 		AA000003AA000003AA000003 /* Sources */ = {
