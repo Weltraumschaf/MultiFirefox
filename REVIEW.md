@@ -5,9 +5,11 @@
 1. **The saved profile is never restored.** `restoreSelection()` sets `selectedVersion`, which
    triggers `onChange(of: selectedVersion)` → `autoSelectProfile(for:)`. That overwrites the restored
    `lastProfile` with "default" or the first profile. (`ContentView.swift`, `onAppear` / `onChange`)
-2. **A failed launch quits silently.** `launch(version:profile:)` runs `try? p.run()` and then always
+2. ✅ **A failed launch quits silently.** `launch(version:profile:)` runs `try? p.run()` and then always
    calls `NSApplication.shared.terminate(nil)`. If the launch fails, the app just exits with no
-   message. (`FirefoxManager.swift`, `launch`)
+   message. (`FirefoxManager.swift`, `launch`) *Fixed: a failed launch or Profile Manager start
+   shows an alert naming the version (and profile) with the error's description; the app keeps
+   running. The error is still logged.*
 3. **Shell injection in Create App.** `buildAppBundle` puts `version` and `profile` straight into a
    bash script inside double quotes. A profile name containing `"`, `$` or a backtick runs as shell
    code. The same values go unescaped into the Info.plist XML (`&` or `<` breaks it) and into

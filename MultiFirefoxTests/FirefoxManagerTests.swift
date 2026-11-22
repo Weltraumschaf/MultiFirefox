@@ -231,4 +231,20 @@ final class FirefoxManagerTests: XCTestCase {
         XCTAssertTrue(configuration.createsNewApplicationInstance)
         XCTAssertEqual(configuration.arguments, ["-P", "Work"])
     }
+
+    func testLaunchFailedAlertNamesVersionProfileAndReason() {
+        let alert = AppAlert.launchFailed(version: "Firefox Nightly", profile: "Work", reason: "The file is damaged.")
+        XCTAssertEqual(alert.title, "Cannot launch Firefox")
+        XCTAssertEqual(alert.message, "Firefox Nightly could not be started with the profile \"Work\".\n\nThe file is damaged.")
+    }
+
+    func testProfileManagerFailedAlertNamesVersionAndReason() {
+        let alert = AppAlert.profileManagerFailed(version: "Firefox", reason: "The file is damaged.")
+        XCTAssertEqual(alert.title, "Cannot open Profile Manager")
+        XCTAssertEqual(alert.message, "The Profile Manager of Firefox could not be opened.\n\nThe file is damaged.")
+    }
+
+    func testUnreadableAlertIncludesReason() {
+        XCTAssertTrue(AppAlert.unreadable(reason: "Operation not permitted").message.contains("(Operation not permitted)"))
+    }
 }

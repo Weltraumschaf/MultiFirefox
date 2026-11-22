@@ -4,7 +4,7 @@ struct ContentView: View {
     @StateObject private var manager = FirefoxManager()
     @State private var selectedVersion: String?
     @State private var selectedProfile: String?
-    @State private var activeAlert: ProfileAlert?
+    @State private var activeAlert: AppAlert?
     @State private var needsProfileReload = false
 
     var body: some View {
@@ -35,7 +35,7 @@ struct ContentView: View {
             selectedProfile = (previous.flatMap { manager.profiles.contains($0) ? $0 : nil })
                 ?? manager.profiles.first
             needsProfileReload = false
-            if manager.profileLoadError != nil { activeAlert = .unreadable }
+            if let error = manager.profileLoadError { activeAlert = .unreadable(reason: error) }
         }
         .alert(
             activeAlert?.title ?? "",
@@ -52,14 +52,11 @@ struct ContentView: View {
             case .unreadable:
                 Button("Open Privacy & Security") { openPrivacySettings() }
                 Button("Cancel", role: .cancel) {}
+            case .launchFailed, .profileManagerFailed:
+                Button("OK", role: .cancel) {}
             }
         } message: { alert in
-            switch alert {
-            case .tooFewProfiles:
-                Text("You have fewer than two Firefox profiles. To run multiple versions side by side, you must have multiple profiles defined.")
-            case .unreadable:
-                Text("MultiFirefoxNG is not allowed to read your Firefox profiles (\(manager.profileLoadError ?? "unknown error")).\n\nmacOS protects data of other apps. Grant MultiFirefoxNG access in System Settings › Privacy & Security, then restart it.")
-            }
+            Text(alert.message)
         }
     }
 
@@ -128,6 +125,9 @@ struct ContentView: View {
                 try await manager.launch(version: version, profile: profile)
             } catch {
                 NSLog("MultiFirefoxNG: cannot launch %@: %@", version.url.path, String(describing: error))
+                activeAlert = .launchFailed(
+                    version: version.name, profile: profile, reason: error.localizedDescription
+                )
             }
         }
     }
@@ -141,6 +141,9 @@ struct ContentView: View {
             } catch {
                 needsProfileReload = false
                 NSLog("MultiFirefoxNG: cannot open Profile Manager of %@: %@", version.url.path, String(describing: error))
+                activeAlert = .profileManagerFailed(
+                    version: version.name, reason: error.localizedDescription
+                )
             }
         }
     }
@@ -151,8 +154,8 @@ struct ContentView: View {
     }
 
     private func checkProfiles() {
-        if manager.profileLoadError != nil {
-            activeAlert = .unreadable
+        if let error = manager.profileLoadError {
+            activeAlert = .unreadable(reason: error)
         } else if manager.profiles.count < 2, !manager.versions.isEmpty {
             activeAlert = .tooFewProfiles
         }
@@ -179,9 +182,12 @@ struct ContentView: View {
     }
 }
 
-private enum ProfileAlert: Identifiable {
+/// An alert shown by `ContentView`; failures carry what the user needs to know.
+enum AppAlert: Identifiable, Hashable {
     case tooFewProfiles
-    case unreadable
+    case unreadable(reason: String)
+    case launchFailed(version: String, profile: String, reason: String)
+    case profileManagerFailed(version: String, reason: String)
 
     var id: Self { self }
 
@@ -189,6 +195,21 @@ private enum ProfileAlert: Identifiable {
         switch self {
         case .tooFewProfiles: "You need to create a profile!"
         case .unreadable: "Cannot read Firefox profiles"
+        case .launchFailed: "Cannot launch Firefox"
+        case .profileManagerFailed: "Cannot open Profile Manager"
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .tooFewProfiles:
+            "You have fewer than two Firefox profiles. To run multiple versions side by side, you must have multiple profiles defined."
+        case let .unreadable(reason):
+            "MultiFirefoxNG is not allowed to read your Firefox profiles (\(reason)).\n\nmacOS protects data of other apps. Grant MultiFirefoxNG access in System Settings › Privacy & Security, then restart it."
+        case let .launchFailed(version, profile, reason):
+            "\(version) could not be started with the profile \"\(profile)\".\n\n\(reason)"
+        case let .profileManagerFailed(version, reason):
+            "The Profile Manager of \(version) could not be opened.\n\n\(reason)"
         }
     }
 }
