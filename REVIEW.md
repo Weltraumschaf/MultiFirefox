@@ -1,34 +1,6 @@
-# Code Review — MultiFirefox (2026-11-22)
+# Code Review 
 
-Review of the SwiftUI port (`MultiFirefox/FirefoxManager.swift`, `MultiFirefox/ContentView.swift`,
-`MultiFirefox/MultiFirefoxApp.swift`, `Info.plist`, Xcode project).
-
-## ✅ Root cause: "You need to create a profile!" although profiles exist
-
-macOS's TCC log shows the read of `~/Library/Application Support/Firefox/profiles.ini` being refused:
-
-```
-Failed to match existing code requirement for subject com.CodeContortionist.MultiFirefox
-  and service kTCCServiceSystemPolicyAppDataDetailed
-Service kTCCServiceSystemPolicyAppDataDetailed does not allow prompting; recording denied.
-```
-
-- Newer macOS protects other apps' data ("App Data"), and the Firefox profile folder falls under it.
-- The fork still uses upstream's bundle ID `com.CodeContortionist.MultiFirefox`. macOS stored a
-  permission entry for that ID with upstream's signature (team `ERD8U3C2K9`). The Xcode build is signed
-  with a different certificate, so macOS recorded a **deny** without prompting. The deny is stored per
-  bundle ID, so the original upstream app is now locked out as well.
-- `loadProfiles()` swallows the read error with `try?`, so the permission error looks like
-  "no profiles" and the misleading "only one profile" alert appears.
-
-**Status: fixed** — bundle ID changed to `de.weltraumschaf.MultiFirefox` and app renamed to `MultiFirefoxNG`; read errors now surface as a
-"Cannot read Firefox profiles" alert with a link to Privacy & Security. Original fix description:
-reset the TCC entry (`tccutil reset SystemPolicyAppDataDetailed com.CodeContortionist.MultiFirefox`),
-give the fork its own bundle ID, and report read errors instead of returning an empty list.
-
-## Additional findings
-
-### Bugs
+## Bugs
 
 1. **The saved profile is never restored.** `restoreSelection()` sets `selectedVersion`, which
    triggers `onChange(of: selectedVersion)` → `autoSelectProfile(for:)`. That overwrites the restored
@@ -48,7 +20,7 @@ give the fork its own bundle ID, and report read errors instead of returning an 
    "default" rather than the `Default=1` flag in the file. *Section filtering and de-duplication are
    fixed; the `Default=1` flag is still ignored.*
 
-### Security / distribution
+## Security / distribution
 
 6. ✅ **The Sparkle update feed is upstream's S3 bucket**
    (`https://s3.amazonaws.com/mff_sparkle/MultiFirefoxAppcast2.xml`), and there's no `SUPublicEDKey`.
@@ -61,7 +33,7 @@ give the fork its own bundle ID, and report read errors instead of returning an 
    `Info.plist` also has outdated entries: `CFBundleSignature`, `CFBundleDevelopmentRegion = English`
    (should be `en`), and no `CFBundleShortVersionString`.
 
-### Code quality
+## Code quality
 
 8. **The version-filter tests don't test the real code.** `filterVersions(from:)` is only used by
    tests; the app uses `loadVersions()`, which repeats the logic separately.
