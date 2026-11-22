@@ -69,14 +69,15 @@ struct ContentView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding([.horizontal, .top], 8)
-            List(manager.versions, id: \.self, selection: $selectedVersion) { version in
-                Text(version)
+            List(manager.versions, selection: $selectedVersion) { version in
+                Text(version.name)
+                    .help(version.url.path)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) {
-                        selectedVersion = version
+                        selectedVersion = version.id
                         guard let profile = selectedProfile else { return }
-                        UserDefaults.standard.set(version, forKey: "lastVersion")
+                        UserDefaults.standard.set(version.name, forKey: "lastVersion")
                         UserDefaults.standard.set(profile, forKey: "lastProfile")
                         manager.launch(version: version, profile: profile)
                     }
@@ -111,21 +112,26 @@ struct ContentView: View {
         .padding(12)
     }
 
+    /// The version selected in the list, resolved to the bundle it stands for.
+    private var selectedFirefox: FirefoxVersion? {
+        selectedVersion.flatMap { id in manager.versions.first { $0.id == id } }
+    }
+
     private func launch() {
-        guard let version = selectedVersion, let profile = selectedProfile else { return }
-        UserDefaults.standard.set(version, forKey: "lastVersion")
+        guard let version = selectedFirefox, let profile = selectedProfile else { return }
+        UserDefaults.standard.set(version.name, forKey: "lastVersion")
         UserDefaults.standard.set(profile, forKey: "lastProfile")
         manager.launch(version: version, profile: profile)
     }
 
     private func openProfileManager() {
-        guard let version = selectedVersion else { return }
+        guard let version = selectedFirefox else { return }
         needsProfileReload = true
         manager.openProfileManager(version: version)
     }
 
     private func createApp() {
-        guard let version = selectedVersion, let profile = selectedProfile else { return }
+        guard let version = selectedFirefox, let profile = selectedProfile else { return }
         manager.createApplication(version: version, profile: profile)
     }
 
@@ -146,8 +152,8 @@ struct ContentView: View {
     private func restoreSelection() {
         let lastVersion = UserDefaults.standard.string(forKey: "lastVersion")
         let lastProfile = UserDefaults.standard.string(forKey: "lastProfile")
-        selectedVersion = lastVersion.flatMap { manager.versions.contains($0) ? $0 : nil }
-            ?? manager.versions.first
+        selectedVersion = lastVersion.flatMap { name in manager.versions.contains { $0.id == name } ? name : nil }
+            ?? manager.versions.first?.id
         selectedProfile = lastProfile.flatMap { manager.profiles.contains($0) ? $0 : nil }
             ?? manager.profiles.first
     }

@@ -1,32 +1,51 @@
 import Foundation
 import AppKit
 
+/// A Firefox app bundle found on disk.
+///
+/// `name` is the bundle name without `.app` and is unique in a version list, so it serves as the
+/// identity. `url` is where the bundle actually is and is used to launch it.
+struct FirefoxVersion: Identifiable, Hashable, Sendable {
+    let name: String
+    let url: URL
+
+    var id: String { name }
+}
+
 @MainActor
 final class FirefoxManager: ObservableObject {
-    @Published var versions: [String] = []
+    @Published var versions: [FirefoxVersion] = []
     @Published var profiles: [String] = []
     /// Set when `profiles.ini` exists but could not be read (e.g. macOS privacy protection).
     @Published var profileLoadError: String?
 
-    private static let applicationsPath = "/Applications"
+    /// Folders searched for Firefox, in order of preference: a version name found in an earlier
+    /// folder wins over the same name in a later one.
+    nonisolated static let applicationsDirectories: [URL] = [
+        URL(fileURLWithPath: "/Applications", isDirectory: true),
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Applications", isDirectory: true)
+    ]
     nonisolated static let profilesIniURL = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent("Library/Application Support/Firefox/profiles.ini")
 
     nonisolated static func isFirefoxApp(_ name: String) -> Bool {
         let lower = name.lowercased()
-        return (lower.hasPrefix("firefox") || lower.hasPrefix("minefield"))
-            && name.hasSuffix(".app")
+        return lower.hasPrefix("firefox") && name.hasSuffix(".app")
     }
 
-    /// Turns paths relative to the applications folder into sorted version names.
+    /// Turns found bundle URLs into versions sorted by name.
     ///
-    /// Entries that are not Firefox app bundles are dropped. For nested paths such as
-    /// `Firefox Versions/Firefox 90.app` the name is taken from the last path component.
-    nonisolated static func filterVersions(from names: [String]) -> [String] {
-        names
-            .filter { isFirefoxApp($0) }
-            .map { String(($0 as NSString).lastPathComponent.dropLast(4)) }
-            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    /// URLs whose last path component is not a Firefox app bundle are dropped. The name is the
+    /// bundle name without `.app`, so `Firefox Versions/Firefox 90.app` becomes `Firefox 90`.
+    /// When several bundles have the same name, the first one in `urls` is kept.
+    nonisolated static func filterVersions(from urls: [URL]) -> [FirefoxVersion] {
+        var seen: Set<String> = []
+        return urls
+            .filter { isFirefoxApp($0.lastPathComponent) }
+            .map { FirefoxVersion(name: String($0.lastPathComponent.dropLast(4)), url: $0) }
+            .filter { seen.insert($0.name).inserted }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     /// Extracts profile names from `profiles.ini`, reading `Name=` only inside `[ProfileN]` sections.
@@ -93,7 +112,9 @@ final class FirefoxManager: ObservableObject {
         return defaultName.map { [$0] + others } ?? others
     }
 
-    nonisolated static func buildAppBundle(version: String, profile: String, in directory: URL) {
+    nonisolated static func buildAppBundle(
+        version: String, appURL: URL, profile: String, in directory: URL
+    ) {
         let appDir = directory.appendingPathComponent("\(version)-\(profile).app")
         let macosDir = appDir.appendingPathComponent("Contents/MacOS")
         let launcher = macosDir.appendingPathComponent("launcher")
@@ -104,7 +125,7 @@ final class FirefoxManager: ObservableObject {
 
         let script = """
 #!/bin/bash
-open -na "/Applications/\(version).app" --args -no-remote -P "\(profile)"
+open -na "\(appURL.path)" --args -no-remote -P "\(profile)"
 """
         try? script.write(to: launcher, atomically: true, encoding: .utf8)
 
@@ -133,10 +154,10 @@ open -na "/Applications/\(version).app" --args -no-remote -P "\(profile)"
         )
     }
 
-    func createApplication(version: String, profile: String) {
+    func createApplication(version: FirefoxVersion, profile: String) {
         let desktop = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Desktop")
-        Self.buildAppBundle(version: version, profile: profile, in: desktop)
+        Self.buildAppBundle(version: version.name, appURL: version.url, profile: profile, in: desktop)
     }
 
     // MARK: - Init and loading
@@ -159,20 +180,28 @@ open -na "/Applications/\(version).app" --args -no-remote -P "\(profile)"
         }
     }
 
-    /// Scans `directory` for Firefox app bundles, descending only into Firefox-named folders.
-    nonisolated static func loadVersions(in directory: String = applicationsPath) -> [String] {
-        guard let enumerator = FileManager.default.enumerator(atPath: directory) else {
-            return []
-        }
-        var candidates: [String] = []
-        while let name = enumerator.nextObject() as? String {
-            let lower = name.lowercased()
-            if isFirefoxApp(name) {
-                candidates.append(name)
-                enumerator.skipDescendants()
-            } else if !(lower.hasPrefix("firefox") || lower.hasPrefix("minefield")) {
-                enumerator.skipDescendants()
+    /// Scans `directories` for Firefox app bundles, descending only into Firefox-named folders.
+    ///
+    /// Directories are searched in the given order, and within one directory paths are taken in
+    /// sorted order, so which bundle wins a name clash is deterministic (see `filterVersions`).
+    nonisolated static func loadVersions(
+        in directories: [URL] = applicationsDirectories
+    ) -> [FirefoxVersion] {
+        var candidates: [URL] = []
+        for directory in directories {
+            guard let enumerator = FileManager.default.enumerator(atPath: directory.path) else {
+                continue
             }
+            var found: [String] = []
+            while let path = enumerator.nextObject() as? String {
+                if isFirefoxApp((path as NSString).lastPathComponent) {
+                    found.append(path)
+                    enumerator.skipDescendants()
+                } else if !path.lowercased().hasPrefix("firefox") {
+                    enumerator.skipDescendants()
+                }
+            }
+            candidates += found.sorted().map { directory.appendingPathComponent($0) }
         }
         return filterVersions(from: candidates)
     }
@@ -194,22 +223,22 @@ open -na "/Applications/\(version).app" --args -no-remote -P "\(profile)"
 
     // MARK: - Launching
 
-    func launch(version: String, profile: String) {
+    func launch(version: FirefoxVersion, profile: String) {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         p.arguments = [
-            "-na", "\(Self.applicationsPath)/\(version).app",
+            "-na", version.url.path,
             "--args", "-no-remote", "-P", profile
         ]
         try? p.run()
         NSApplication.shared.terminate(nil)
     }
 
-    func openProfileManager(version: String) {
+    func openProfileManager(version: FirefoxVersion) {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         p.arguments = [
-            "-n", "\(Self.applicationsPath)/\(version).app",
+            "-n", version.url.path,
             "--args", "--profilemanager"
         ]
         try? p.run()

@@ -97,43 +97,89 @@ final class FirefoxManagerTests: XCTestCase {
         XCTAssertTrue(FirefoxManager.isFirefoxApp("Firefox 120.app"))
         XCTAssertTrue(FirefoxManager.isFirefoxApp("Firefox.app"))
         XCTAssertTrue(FirefoxManager.isFirefoxApp("firefox.app"))
-        XCTAssertTrue(FirefoxManager.isFirefoxApp("Minefield.app"))
+        XCTAssertTrue(FirefoxManager.isFirefoxApp("Firefox Nightly.app"))
     }
 
     func testIsFirefoxAppRejectsNonFirefox() {
         XCTAssertFalse(FirefoxManager.isFirefoxApp("Safari.app"))
         XCTAssertFalse(FirefoxManager.isFirefoxApp("Firefox Folder"))
         XCTAssertFalse(FirefoxManager.isFirefoxApp("NotFirefox.app"))
+        XCTAssertFalse(FirefoxManager.isFirefoxApp("Minefield.app"))
     }
 
+    private func names(_ versions: [FirefoxVersion]) -> [String] { versions.map(\.name) }
+
+    private func urls(_ paths: [String]) -> [URL] { paths.map { URL(fileURLWithPath: $0) } }
+
     func testFilterVersionsStripsAppSuffixAndFilters() {
-        let input = ["Firefox 120.app", "Safari.app", "Firefox.app", "Chrome.app"]
-        XCTAssertEqual(FirefoxManager.filterVersions(from: input), ["Firefox", "Firefox 120"])
+        let input = urls(["/Applications/Firefox 120.app", "/Applications/Safari.app",
+                          "/Applications/Firefox.app", "/Applications/Chrome.app"])
+        XCTAssertEqual(names(FirefoxManager.filterVersions(from: input)), ["Firefox", "Firefox 120"])
     }
 
     func testFilterVersionsSortsCaseInsensitively() {
-        let input = ["Firefox 90.app", "Firefox 120.app", "Minefield.app"]
-        XCTAssertEqual(FirefoxManager.filterVersions(from: input), ["Firefox 120", "Firefox 90", "Minefield"])
+        let input = urls(["/A/Firefox 90.app", "/A/Firefox 120.app", "/A/firefox Beta.app"])
+        XCTAssertEqual(names(FirefoxManager.filterVersions(from: input)),
+                       ["Firefox 120", "Firefox 90", "firefox Beta"])
     }
 
-    func testFilterVersionsUsesLastPathComponentOfNestedPaths() {
-        let input = ["Firefox Versions/Firefox 90.app", "Firefox 120.app"]
-        XCTAssertEqual(FirefoxManager.filterVersions(from: input), ["Firefox 120", "Firefox 90"])
+    func testFilterVersionsKeepsRealBundleURL() {
+        let input = urls(["/A/Firefox Versions/Firefox 90.app", "/A/Firefox 120.app"])
+        XCTAssertEqual(FirefoxManager.filterVersions(from: input), [
+            FirefoxVersion(name: "Firefox 120", url: URL(fileURLWithPath: "/A/Firefox 120.app")),
+            FirefoxVersion(name: "Firefox 90", url: URL(fileURLWithPath: "/A/Firefox Versions/Firefox 90.app"))
+        ])
+    }
+
+    func testFilterVersionsKeepsFirstOfDuplicateNames() {
+        let input = urls(["/Applications/Firefox.app", "/Users/me/Applications/Firefox.app"])
+        XCTAssertEqual(FirefoxManager.filterVersions(from: input),
+                       [FirefoxVersion(name: "Firefox", url: URL(fileURLWithPath: "/Applications/Firefox.app"))])
+    }
+
+    func testApplicationsDirectoriesSearchSystemThenUserFolder() {
+        XCTAssertEqual(FirefoxManager.applicationsDirectories.map(\.path), [
+            "/Applications",
+            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications").path
+        ])
+    }
+
+    private func makeTree(_ paths: [String]) throws -> URL {
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        for path in paths {
+            try fm.createDirectory(at: dir.appendingPathComponent(path), withIntermediateDirectories: true)
+        }
+        addTeardownBlock { try? fm.removeItem(at: dir) }
+        return dir
     }
 
     func testLoadVersionsScansDirectory() throws {
-        let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        defer { try? fm.removeItem(at: dir) }
-        for path in ["Firefox.app/Contents", "Firefox Versions/Firefox 90.app/Contents",
-                     "Safari.app/Contents", "Utilities/Firefox 80.app/Contents"] {
-            try fm.createDirectory(at: dir.appendingPathComponent(path), withIntermediateDirectories: true)
-        }
-        XCTAssertEqual(FirefoxManager.loadVersions(in: dir.path), ["Firefox", "Firefox 90"])
+        let dir = try makeTree(["Firefox.app/Contents", "Firefox Versions/Firefox 90.app/Contents",
+                                "Firefox Versions/Safari.app/Contents",
+                                "Safari.app/Contents", "Utilities/Firefox 80.app/Contents"])
+        let versions = FirefoxManager.loadVersions(in: [dir])
+        XCTAssertEqual(names(versions), ["Firefox", "Firefox 90"])
+        XCTAssertEqual(versions.last?.url.standardizedFileURL,
+                       dir.appendingPathComponent("Firefox Versions/Firefox 90.app").standardizedFileURL)
     }
 
-    func testLoadVersionsReturnsEmptyForMissingDirectory() {
-        XCTAssertEqual(FirefoxManager.loadVersions(in: "/nonexistent-\(UUID().uuidString)"), [])
+    func testLoadVersionsSearchesAllDirectoriesAndPrefersEarlierOne() throws {
+        let system = try makeTree(["Firefox.app/Contents"])
+        let user = try makeTree(["Firefox.app/Contents", "Firefox Nightly.app/Contents"])
+        let versions = FirefoxManager.loadVersions(in: [system, user])
+        XCTAssertEqual(names(versions), ["Firefox", "Firefox Nightly"])
+        XCTAssertEqual(versions.first?.url.standardizedFileURL,
+                       system.appendingPathComponent("Firefox.app").standardizedFileURL)
+        XCTAssertEqual(versions.last?.url.standardizedFileURL,
+                       user.appendingPathComponent("Firefox Nightly.app").standardizedFileURL)
+    }
+
+    func testLoadVersionsSkipsMissingDirectory() throws {
+        let missing = URL(fileURLWithPath: "/nonexistent-\(UUID().uuidString)")
+        XCTAssertEqual(FirefoxManager.loadVersions(in: [missing]), [])
+        let dir = try makeTree(["Firefox.app/Contents"])
+        XCTAssertEqual(names(FirefoxManager.loadVersions(in: [missing, dir])), ["Firefox"])
     }
 
     func testBuildAppBundleCreatesExpectedFiles() throws {
@@ -142,7 +188,9 @@ final class FirefoxManagerTests: XCTestCase {
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        FirefoxManager.buildAppBundle(version: "Firefox 120", profile: "Work", in: tempDir)
+        FirefoxManager.buildAppBundle(
+            version: "Firefox 120", appURL: URL(fileURLWithPath: "/Users/me/Applications/Firefox 120.app"),
+            profile: "Work", in: tempDir)
 
         let appDir = tempDir.appendingPathComponent("Firefox 120-Work.app")
         XCTAssertTrue(FileManager.default.fileExists(
@@ -157,13 +205,15 @@ final class FirefoxManagerTests: XCTestCase {
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        FirefoxManager.buildAppBundle(version: "Firefox 120", profile: "Work", in: tempDir)
+        FirefoxManager.buildAppBundle(
+            version: "Firefox 120", appURL: URL(fileURLWithPath: "/Users/me/Applications/Firefox 120.app"),
+            profile: "Work", in: tempDir)
 
         let launcherURL = tempDir
             .appendingPathComponent("Firefox 120-Work.app/Contents/MacOS/launcher")
         let content = try String(contentsOf: launcherURL)
         XCTAssertTrue(content.hasPrefix("#!/bin/bash"))
-        XCTAssertTrue(content.contains("Firefox 120"))
+        XCTAssertTrue(content.contains("\"/Users/me/Applications/Firefox 120.app\""))
         XCTAssertTrue(content.contains("Work"))
     }
 }

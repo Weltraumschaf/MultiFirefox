@@ -40,8 +40,10 @@
    tests; the app uses `loadVersions()`, which repeats the logic separately.
    *Fixed: `loadVersions(in:)` now only walks the folder and hands the found paths to
    `filterVersions(from:)`; tests also run `loadVersions(in:)` on a temporary folder.*
-9. **Firefox is only looked for in `/Applications`**; `~/Applications` is ignored. The `Minefield`
-   prefix is long obsolete.
+9. ✅ **Firefox is only looked for in `/Applications`**; `~/Applications` is ignored. The `Minefield`
+   prefix is long obsolete. *Fixed: `/Applications` and `~/Applications` are both searched and
+   `Minefield` is dropped. Each version keeps its real bundle URL, used by launch, Profile Manager
+   and Create App. If a name exists twice, the bundle in `/Applications` wins.*
 10. **Launching goes through `/usr/bin/open`.** `NSWorkspace.openApplication(at:configuration:)` with
     `createsNewApplicationInstance = true` and `arguments` would report errors properly.
 11. **Double-click to launch is attached to the row text** with `onTapGesture(count: 2)`, which can
