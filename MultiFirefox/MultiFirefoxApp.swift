@@ -7,22 +7,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+/// Publishes whether Sparkle can currently start an update check, so the menu item
+/// is disabled while a check is already running.
+final class CheckForUpdatesViewModel: ObservableObject {
+    @Published var canCheckForUpdates = false
+
+    init(updater: SPUUpdater) {
+        updater.publisher(for: \.canCheckForUpdates)
+            .assign(to: &$canCheckForUpdates)
+    }
+}
+
+struct CheckForUpdatesView: View {
+    @ObservedObject private var viewModel: CheckForUpdatesViewModel
+    private let updater: SPUUpdater
+
+    init(updater: SPUUpdater) {
+        self.updater = updater
+        self.viewModel = CheckForUpdatesViewModel(updater: updater)
+    }
+
+    var body: some View {
+        Button("Check for Updates…", action: updater.checkForUpdates)
+            .disabled(!viewModel.canCheckForUpdates)
+    }
+}
+
 @main
 struct MultiFirefoxApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    private let updaterController: SPUStandardUpdaterController
 
-    /// Sparkle updates are switched off until the fork has its own signed appcast.
-    /// To enable: set this to `true` and add `SUFeedURL` plus `SUPublicEDKey` to Info.plist.
-    private static let updatesEnabled = false
-
-    init() {
-        updaterController = SPUStandardUpdaterController(
-            startingUpdater: Self.updatesEnabled,
-            updaterDelegate: nil,
-            userDriverDelegate: nil
-        )
-    }
+    /// Feed and public key come from Info.plist (`SUFeedURL`, `SUPublicEDKey`).
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
 
     var body: some Scene {
         WindowGroup {
@@ -32,11 +52,7 @@ struct MultiFirefoxApp: App {
         .commands {
             CommandGroup(replacing: .newItem) { }
             CommandGroup(after: .appInfo) {
-                if Self.updatesEnabled {
-                    Button("Check for Updates…") {
-                        updaterController.updater.checkForUpdates()
-                    }
-                }
+                CheckForUpdatesView(updater: updaterController.updater)
             }
         }
     }

@@ -22,6 +22,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSQuitAlwaysKeepsWindows</key>
 	<false/>
+	<key>SUFeedURL</key>
+	<string>https://weltraumschaf.github.io/MultiFirefox/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>R+25S7oQBiwGCzQzOe8NwuBFTiHhjsTk6DGiHGgjwDs=</string>
 </dict>

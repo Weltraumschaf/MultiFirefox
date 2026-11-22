@@ -102,22 +102,33 @@ a stable identity across releases.
 
 ### ✅ 2. Sparkle EdDSA Keys
 
-1. Run Sparkle's `generate_keys` once (in the SwiftPM artifacts:
-   `…/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys`, or from the
-   Sparkle release tarball). The private key is stored in the login keychain.
-2. Back up the private key: `generate_keys -x sparkle_private_key` → store it
-   in a password manager (and later as a GitHub secret). Delete the file.
-3. Add the printed public key to `Info.plist` as `SUPublicEDKey`.
+1. Copy Sparkle's tools out of DerivedData to a stable place:
+   `cp -R ~/Library/Developer/Xcode/DerivedData/MultiFirefox-*/SourcePackages/artifacts/sparkle/Sparkle/bin/* ~/bin/sparkle/`
+   (or use the Sparkle release tarball of the same version).
+2. Run `~/bin/sparkle/generate_keys` once. The private key is stored in the
+   login keychain ("Private key for signing Sparkle updates", account
+   `ed25519`); allow keychain access with *Always Allow*.
+3. Back up the private key: `generate_keys -x <file>` → store it in a password
+   manager (later also as GitHub secret `SPARKLE_PRIVATE_KEY`), delete the
+   file. Restore on another Mac with `generate_keys -f <file>`.
+4. Test: `~/bin/sparkle/sign_update <any file>` prints `sparkle:edSignature=…`.
+5. Add the public key (`generate_keys -p`) to `Info.plist` as `SUPublicEDKey`.
 
 ### 3. Feed URL and App Changes
 
-- Enable GitHub Pages for the MultiFirefox repo (branch `gh-pages`, root).
-- Add to `Info.plist`:
-  - `SUFeedURL` = `https://weltraumschaf.github.io/MultiFirefox/appcast.xml`
-  - `SUEnableAutomaticChecks` = `true` (optional; otherwise Sparkle asks on
-    second launch)
-- Remove the `updatesEnabled` flag in `MultiFirefoxApp.swift`, or derive it
-  from the presence of `SUFeedURL` in the bundle.
+- `Info.plist`: `SUFeedURL` =
+  `https://weltraumschaf.github.io/MultiFirefox/appcast.xml`.
+  `SUEnableAutomaticChecks` is deliberately not set: Sparkle asks the user on
+  the second launch whether to check automatically.
+- `MultiFirefoxApp.swift`: updater always started; "Check for Updates…" in the
+  app menu, disabled while a check is running (`CheckForUpdatesViewModel`
+  observes `SPUUpdater.canCheckForUpdates`).
+- Branch `gh-pages` (orphan) holds the feed: `appcast.xml` (initially an empty
+  channel → "no update available" instead of a 404) and `.nojekyll`.
+- Enable GitHub Pages: repo **Settings → Pages → Build and deployment →
+  Source: Deploy from a branch → Branch: `gh-pages`, folder `/ (root)` →
+  Save**. Verify:
+  `curl -sI https://weltraumschaf.github.io/MultiFirefox/appcast.xml` → `200`.
 
 ### 4. Versioning
 
