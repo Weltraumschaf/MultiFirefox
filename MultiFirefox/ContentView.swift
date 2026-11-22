@@ -24,16 +24,16 @@ struct ContentView: View {
         }
         .onChange(of: selectedVersion) { newVersion in
             guard newVersion != nil else { return }
-            autoSelectProfile()
+            selectedProfile = FirefoxManager.profileToSelect(
+                preferred: selectedProfile, in: manager.profiles)
         }
         .onReceive(
             NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
         ) { _ in
             guard needsProfileReload else { return }
-            let previous = selectedProfile
             manager.reloadProfiles()
-            selectedProfile = (previous.flatMap { manager.profiles.contains($0) ? $0 : nil })
-                ?? manager.profiles.first
+            selectedProfile = FirefoxManager.profileToSelect(
+                preferred: selectedProfile, in: manager.profiles)
             needsProfileReload = false
             if let error = manager.profileLoadError { activeAlert = .unreadable(reason: error) }
         }
@@ -200,13 +200,7 @@ struct ContentView: View {
         let lastProfile = UserDefaults.standard.string(forKey: "lastProfile")
         selectedVersion = lastVersion.flatMap { name in manager.versions.contains { $0.id == name } ? name : nil }
             ?? manager.versions.first?.id
-        selectedProfile = lastProfile.flatMap { manager.profiles.contains($0) ? $0 : nil }
-            ?? manager.profiles.first
-    }
-
-    /// Selects Firefox's default profile, which `parseProfiles(from:)` always lists first.
-    private func autoSelectProfile() {
-        selectedProfile = manager.profiles.first
+        selectedProfile = FirefoxManager.profileToSelect(preferred: lastProfile, in: manager.profiles)
     }
 }
 

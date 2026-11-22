@@ -62,6 +62,25 @@ final class FirefoxManagerTests: XCTestCase {
         XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["Work"])
     }
 
+    func testProfileToSelectKeepsPreferredProfileThatExists() {
+        XCTAssertEqual(
+            FirefoxManager.profileToSelect(preferred: "Work", in: ["default", "Work"]), "Work")
+    }
+
+    func testProfileToSelectFallsBackToDefaultWhenPreferredIsGone() {
+        XCTAssertEqual(
+            FirefoxManager.profileToSelect(preferred: "Old", in: ["default", "Work"]), "default")
+    }
+
+    func testProfileToSelectFallsBackToDefaultWhenNothingPreferred() {
+        XCTAssertEqual(
+            FirefoxManager.profileToSelect(preferred: nil, in: ["default", "Work"]), "default")
+    }
+
+    func testProfileToSelectReturnsNilWithoutProfiles() {
+        XCTAssertNil(FirefoxManager.profileToSelect(preferred: "Work", in: []))
+    }
+
     func testLoadProfilesReturnsEmptyWhenFileMissing() throws {
         let missing = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)

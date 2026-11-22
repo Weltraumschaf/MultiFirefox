@@ -60,6 +60,16 @@ final class FirefoxManager: ObservableObject {
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
+    /// The profile to select: `preferred` if it is still among `profiles`, else the default profile
+    /// (listed first by `parseProfiles(from:)`), or `nil` if there are no profiles.
+    ///
+    /// All Firefox versions share one `profiles.ini`, so a valid selection is kept when the version
+    /// changes; only a missing or vanished profile is replaced by the default.
+    nonisolated static func profileToSelect(preferred: String?, in profiles: [String]) -> String? {
+        if let preferred, profiles.contains(preferred) { return preferred }
+        return profiles.first
+    }
+
     /// Extracts profile names from `profiles.ini`, reading `Name=` only inside `[ProfileN]` sections.
     ///
     /// The default profile comes first, the rest are sorted alphabetically. The default is, in order

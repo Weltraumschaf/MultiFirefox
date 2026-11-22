@@ -2,9 +2,12 @@
 
 ## Bugs
 
-1. **The saved profile is never restored.** `restoreSelection()` sets `selectedVersion`, which
+1. ✅ **The saved profile is never restored.** `restoreSelection()` sets `selectedVersion`, which
    triggers `onChange(of: selectedVersion)` → `autoSelectProfile(for:)`. That overwrites the restored
    `lastProfile` with "default" or the first profile. (`ContentView.swift`, `onAppear` / `onChange`)
+   *Fixed: all versions share one `profiles.ini`, so a version change now keeps a profile that
+   still exists and only falls back to the default when none is selected. `profileToSelect` makes
+   this decision at app start, on version change and profile reload alike, and is unit-tested.*
 2. ✅ **A failed launch quits silently.** `launch(version:profile:)` runs `try? p.run()` and then always
    calls `NSApplication.shared.terminate(nil)`. If the launch fails, the app just exits with no
    message. (`FirefoxManager.swift`, `launch`) *Fixed: a failed launch or Profile Manager start
