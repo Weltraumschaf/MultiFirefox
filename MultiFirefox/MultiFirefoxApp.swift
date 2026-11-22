@@ -12,9 +12,13 @@ struct MultiFirefoxApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     private let updaterController: SPUStandardUpdaterController
 
+    /// Sparkle updates are switched off until the fork has its own signed appcast.
+    /// To enable: set this to `true` and add `SUFeedURL` plus `SUPublicEDKey` to Info.plist.
+    private static let updatesEnabled = false
+
     init() {
         updaterController = SPUStandardUpdaterController(
-            startingUpdater: true,
+            startingUpdater: Self.updatesEnabled,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
@@ -28,8 +32,10 @@ struct MultiFirefoxApp: App {
         .commands {
             CommandGroup(replacing: .newItem) { }
             CommandGroup(after: .appInfo) {
-                Button("Check for Updates…") {
-                    updaterController.updater.checkForUpdates()
+                if Self.updatesEnabled {
+                    Button("Check for Updates…") {
+                        updaterController.updater.checkForUpdates()
+                    }
                 }
             }
         }

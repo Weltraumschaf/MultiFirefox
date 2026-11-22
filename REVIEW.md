@@ -3,7 +3,7 @@
 Review of the SwiftUI port (`MultiFirefox/FirefoxManager.swift`, `MultiFirefox/ContentView.swift`,
 `MultiFirefox/MultiFirefoxApp.swift`, `Info.plist`, Xcode project).
 
-## Root cause: "You need to create a profile!" although profiles exist
+## ✅ Root cause: "You need to create a profile!" although profiles exist
 
 macOS's TCC log shows the read of `~/Library/Application Support/Firefox/profiles.ini` being refused:
 
@@ -21,7 +21,7 @@ Service kTCCServiceSystemPolicyAppDataDetailed does not allow prompting; recordi
 - `loadProfiles()` swallows the read error with `try?`, so the permission error looks like
   "no profiles" and the misleading "only one profile" alert appears.
 
-**Status: fixed** — bundle ID changed to `de.weltraumschaf.MultiFirefox`; read errors now surface as a
+**Status: fixed** — bundle ID changed to `de.weltraumschaf.MultiFirefox` and app renamed to `MultiFirefoxNG`; read errors now surface as a
 "Cannot read Firefox profiles" alert with a link to Privacy & Security. Original fix description:
 reset the TCC entry (`tccutil reset SystemPolicyAppDataDetailed com.CodeContortionist.MultiFirefox`),
 give the fork its own bundle ID, and report read errors instead of returning an empty list.
@@ -43,17 +43,20 @@ give the fork its own bundle ID, and report read errors instead of returning an 
    build the plist with `PropertyListSerialization`.
 4. **Create App fails silently.** Every file operation uses `try?`, an existing bundle on the Desktop
    is overwritten, and the user gets no feedback on success or failure.
-5. **(fixed)** **`parseProfiles` takes `Name=` from any section**, not only `[ProfileN]`, and doesn't remove
+5. ✅ **`parseProfiles` takes `Name=` from any section**, not only `[ProfileN]`, and doesn't remove
    duplicates. Duplicate names break `List(id: \.self)`. It also picks the default profile by the name
    "default" rather than the `Default=1` flag in the file. *Section filtering and de-duplication are
    fixed; the `Default=1` flag is still ignored.*
 
 ### Security / distribution
 
-6. **The Sparkle update feed is upstream's S3 bucket**
+6. ✅ **The Sparkle update feed is upstream's S3 bucket**
    (`https://s3.amazonaws.com/mff_sparkle/MultiFirefoxAppcast2.xml`), and there's no `SUPublicEDKey`.
    If that abandoned bucket name is ever re-registered by someone else, they control what your users
    get as updates. Point it at your own feed and sign updates (EdDSA), or turn the updater off for now.
+   *Mitigated: the upstream `SUFeedURL` is removed and the updater is switched off via
+   `MultiFirefoxApp.updatesEnabled` (Sparkle stays linked). Before enabling it again, add an own
+   `SUFeedURL` and `SUPublicEDKey`.*
 7. **Hardened runtime isn't enabled** (`ENABLE_HARDENED_RUNTIME`), and notarization requires it.
    `Info.plist` also has outdated entries: `CFBundleSignature`, `CFBundleDevelopmentRegion = English`
    (should be `en`), and no `CFBundleShortVersionString`.
