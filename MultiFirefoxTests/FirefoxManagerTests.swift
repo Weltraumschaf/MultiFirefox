@@ -8,6 +8,11 @@ final class FirefoxManagerTests: XCTestCase {
         XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["default", "Work"])
     }
 
+    func testParseProfilesIgnoresStoreIDKeys() {
+        let ini = "[Profile0]\nName=default\nPath=Profiles/a.default\nStoreID=04246a05\nDefault=1\n[Profile1]\nName=Work\nPath=Profiles/b.work\nStoreID=04246a05"
+        XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["default", "Work"])
+    }
+
     func testParseProfilesPutsDefaultFirst() {
         let ini = "[Profile0]\nName=Work\n[Profile1]\nName=default"
         XCTAssertEqual(FirefoxManager.parseProfiles(from: ini).first, "default")

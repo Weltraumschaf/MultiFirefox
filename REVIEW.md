@@ -69,6 +69,10 @@
     intended API for this.
     *Fixed: the version list uses `.contextMenu(forSelectionType:menu:primaryAction:)`; double-click
     launches, and a "Launch" context menu item was added.*
-12. **Possible gap with Firefox's new profiles (unverified):** Firefox's newer profile switcher keeps
+12. ✅ **Possible gap with Firefox's new profiles (unverified):** Firefox's newer profile switcher keeps
     data under `Profile Groups/`. Profiles made through it may not be listed in `profiles.ini`, so this
     app wouldn't show them.
+    *Verified, not an issue for current data: `Profile Groups/04246a05.sqlite` exists but its `Profiles`
+    table is empty (0 rows), while all 5 profile directories in use are listed in `profiles.ini`. No
+    code change; a test documents that a `StoreID=` key in a profile section is ignored. If a store ever
+    holds profiles missing from `profiles.ini`, they would need `--profile <path>` launching.*
