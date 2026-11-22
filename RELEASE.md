@@ -40,7 +40,7 @@ References: [Acceptable Casks](https://docs.brew.sh/Acceptable-Casks),
 
 ## One-Time Setup
 
-### 1. Self-Signed Code-Signing Certificate
+### ✅ 1. Self-Signed Code-Signing Certificate
 
 Ad-hoc signatures (`codesign -s -`) change with every build, so macOS treats
 each update as a different app and re-prompts for permissions (e.g. the App
@@ -48,21 +48,57 @@ Data / TCC access to Firefox's `profiles.ini`). A self-signed certificate gives
 a stable identity across releases.
 
 1. Keychain Access → Certificate Assistant → **Create a Certificate…**
-   - Name: `MultiFirefox Signing` (any name; used as the signing identity)
+   - Name: `MultiFirefoxNG Signing` (any name; used as the signing identity)
    - Identity Type: Self-Signed Root
    - Certificate Type: **Code Signing**
-   - Validity: tick "Let me override defaults" and pick a long period
-     (e.g. 3650 days).
+   - **Tick "Let me override defaults"** and set Validity Period to e.g.
+     `7300` days (20 years). The default is only 365 days.
+
+   Why validity matters: the designated requirement of a self-signed app is
+   `certificate root = H"<hash of the certificate>"` (for a self-signed
+   certificate root and leaf are the same). An expired certificate
+   cannot sign new builds, and a replacement certificate has a different hash
+   — macOS (TCC) then treats the app as a different one.
 2. Export certificate + private key as `.p12` and **back it up** (password
    manager). Losing it means the next release looks like a different app.
-3. Verify: `security find-identity -v -p codesigning` lists it.
-4. In Xcode, Release configuration of the `MultiFirefox` target:
+3. Verify: `security find-identity -p codesigning` (**without** `-v`) lists
+   it as `CSSMERR_TP_NOT_TRUSTED`. That is expected — `-v` only shows identities
+   chaining to a trusted root. `codesign` signs with it anyway.
+   Optional: Keychain Access → certificate → Get Info → Trust →
+   Code Signing: *Always Trust* makes it show up under `-v` and in Xcode's
+   identity picker.
+4. Test: `codesign -s "MultiFirefoxNG Signing" -f <some copied binary>` and
+   `codesign -d -r- <binary>` shows `certificate leaf = H"…"`.
+5. In Xcode, Release configuration of the `MultiFirefox` target:
    - `CODE_SIGN_STYLE = Manual`
-   - `CODE_SIGN_IDENTITY = "MultiFirefox Signing"`
+   - `CODE_SIGN_IDENTITY = "MultiFirefoxNG Signing"`
    - `DEVELOPMENT_TEAM` empty (no team for self-signed)
    - keep `ENABLE_HARDENED_RUNTIME = YES`
+   - `CODE_SIGN_ENTITLEMENTS = MultiFirefox/MultiFirefox.entitlements` with
+     `com.apple.security.cs.disable-library-validation = true`. Hardened
+     runtime only loads frameworks with the *same Team ID*; a self-signed
+     certificate has none, so without this dyld rejects the embedded
+     `Sparkle.framework` ("different Team IDs") and the app crashes on launch.
+
+   Both configurations also need:
+   - `LD_RUNPATH_SEARCH_PATHS = @executable_path/../Frameworks` — otherwise
+     `@rpath/Sparkle.framework` is not found outside Xcode.
+   - `INSTALL_PATH = /Applications` — the archive then contains the app at
+     `Products/Applications/MultiFirefoxNG.app`.
 
    Debug can stay on automatic signing with the Apple Development identity.
+
+   Note: Sparkle's nested helpers (`Autoupdate`, `Updater.app`,
+   `Downloader.xpc`, `Installer.xpc`) stay ad-hoc signed as shipped — Xcode
+   only re-signs the framework itself. This works without notarization;
+   re-signing them with the own identity is optional.
+6. Check a Release archive:
+   ```sh
+   codesign --verify --deep --strict --verbose=2 MultiFirefoxNG.app
+   codesign -dvv MultiFirefoxNG.app       # Authority=MultiFirefoxNG Signing, TeamIdentifier=not set
+   codesign -d -r- MultiFirefoxNG.app     # certificate root = H"…"
+   MultiFirefoxNG.app/Contents/MacOS/MultiFirefoxNG   # must start, no dyld error
+   ```
 
 ### 2. Sparkle EdDSA Keys
 
@@ -160,7 +196,7 @@ To be automated in `scripts/release.sh`, later in CI.
 4. Verify the signature:
    ```sh
    codesign --verify --deep --strict --verbose=2 build/release/MultiFirefoxNG.app
-   codesign -dvv build/release/MultiFirefoxNG.app   # Authority=MultiFirefox Signing
+   codesign -dvv build/release/MultiFirefoxNG.app   # Authority=MultiFirefoxNG Signing
    ```
 5. Package (Sparkle prefers zip or dmg):
    ```sh

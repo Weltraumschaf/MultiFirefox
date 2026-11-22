@@ -7,19 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		03FCE3050E78108F009723BE /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03FCE3040E78108F009723BE /* Sparkle.framework */; };
-		03FCE31B0E7810DF009723BE /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 03FCE3040E78108F009723BE /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		1C4C43CB2FABC57A00F80D88 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 1C4C43CA2FABC57A00F80D88 /* Sparkle */; };
-		AA000002AA000002AA000002 /* FirefoxManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AA000001AA000001 /* FirefoxManagerTests.swift */; };
-		BB000002BB000002BB000002 /* FirefoxManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000001BB000001BB000001 /* FirefoxManager.swift */; };
-		CC000002CC000002CC000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CC000001CC000001 /* ContentView.swift */; };
-		DD000002DD000002DD000002 /* MultiFirefoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD000001DD000001DD000001 /* MultiFirefoxApp.swift */; };
 		5569ED0C0DB2C95900099182 /* INSTALL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 5569ED0B0DB2C95900099182 /* INSTALL.txt */; };
 		5571D1950DB2C840003F0FEA /* MITLicense.txt in Resources */ = {isa = PBXBuildFile; fileRef = 5571D1940DB2C840003F0FEA /* MITLicense.txt */; };
 		558BC9310DAE6E0300999EC4 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 558BC9300DAE6E0300999EC4 /* Credits.rtf */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AA000002AA000002AA000002 /* FirefoxManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AA000001AA000001 /* FirefoxManagerTests.swift */; };
+		BB000002BB000002BB000002 /* FirefoxManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000001BB000001BB000001 /* FirefoxManager.swift */; };
+		CC000002CC000002CC000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CC000001CC000001 /* ContentView.swift */; };
 		D5A09E15217688790048256B /* firefox.icns in Resources */ = {isa = PBXBuildFile; fileRef = D5A09E14217688790048256B /* firefox.icns */; };
+		DD000002DD000002DD000002 /* MultiFirefoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD000001DD000001DD000001 /* MultiFirefoxApp.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA00000BAA00000BAA00000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D1107260486CEB800E47090;
+			remoteInfo = MultiFirefox;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		03FCE31A0E7810CD009723BE /* CopyFiles */ = {
@@ -33,11 +41,6 @@
 
 /* Begin PBXFileReference section */
 		03FCE3040E78108F009723BE /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
-		AA000001AA000001AA000001 /* FirefoxManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirefoxManagerTests.swift; sourceTree = "<group>"; };
-		BB000001BB000001BB000001 /* FirefoxManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FirefoxManager.swift; path = MultiFirefox/FirefoxManager.swift; sourceTree = "<group>"; };
-		CC000001CC000001CC000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = MultiFirefox/ContentView.swift; sourceTree = "<group>"; };
-		DD000001DD000001DD000001 /* MultiFirefoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MultiFirefoxApp.swift; path = MultiFirefox/MultiFirefoxApp.swift; sourceTree = "<group>"; };
-		AA00000DAA00000DAA00000D /* MultiFirefoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MultiFirefoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
@@ -47,7 +50,12 @@
 		558BC9300DAE6E0300999EC4 /* Credits.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Credits.rtf; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* MultiFirefoxNG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MultiFirefoxNG.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA000001AA000001AA000001 /* FirefoxManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirefoxManagerTests.swift; sourceTree = "<group>"; };
+		AA00000DAA00000DAA00000D /* MultiFirefoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MultiFirefoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB000001BB000001BB000001 /* FirefoxManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FirefoxManager.swift; path = MultiFirefox/FirefoxManager.swift; sourceTree = "<group>"; };
+		CC000001CC000001CC000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = MultiFirefox/ContentView.swift; sourceTree = "<group>"; };
 		D5A09E14217688790048256B /* firefox.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = firefox.icns; sourceTree = "<group>"; };
+		DD000001DD000001DD000001 /* MultiFirefoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MultiFirefoxApp.swift; path = MultiFirefox/MultiFirefoxApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,16 +72,6 @@
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXContainerItemProxy section */
-		AA00000BAA00000BAA00000B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D1107260486CEB800E47090;
-			remoteInfo = MultiFirefox;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXGroup section */
 		080E96DDFE201D6D7F000001 /* Classes */ = {
@@ -114,14 +112,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		AA00000AAA00000AAA00000A /* MultiFirefoxTests */ = {
-			isa = PBXGroup;
-			children = (
-				AA000001AA000001AA000001 /* FirefoxManagerTests.swift */,
-			);
-			path = MultiFirefoxTests;
-			sourceTree = "<group>";
-		};
 		29B97314FDCFA39411CA2CEA /* MultiFirefox */ = {
 			isa = PBXGroup;
 			children = (
@@ -153,6 +143,14 @@
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		AA00000AAA00000AAA00000A /* MultiFirefoxTests */ = {
+			isa = PBXGroup;
+			children = (
+				AA000001AA000001AA000001 /* FirefoxManagerTests.swift */,
+			);
+			path = MultiFirefoxTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -268,8 +266,39 @@
 		};
 /* End PBXTargetDependency section */
 
-
 /* Begin XCBuildConfiguration section */
+		AA000007AA000007AA000007 /* Debug configuration for PBXNativeTarget "MultiFirefoxTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefoxTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefoxNG.app/Contents/MacOS/MultiFirefoxNG";
+			};
+			name = Debug;
+		};
+		AA000008AA000008AA000008 /* Release configuration for PBXNativeTarget "MultiFirefoxTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefoxTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefoxNG.app/Contents/MacOS/MultiFirefoxNG";
+			};
+			name = Release;
+		};
 		C01FCF4B08A954540054247B /* Debug configuration for PBXNativeTarget "MultiFirefox" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -288,7 +317,11 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
+				INSTALL_PATH = /Applications;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 2.5.0;
 				ONLY_ACTIVE_ARCH = YES;
@@ -304,10 +337,12 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = MultiFirefox/MultiFirefox.entitlements;
+				CODE_SIGN_IDENTITY = "MultiFirefoxNG Signing";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 2.5.0;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -316,7 +351,11 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_VERSION = "";
 				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
+				INSTALL_PATH = /Applications;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 2.5.0;
 				ONLY_ACTIVE_ARCH = NO;
@@ -412,54 +451,22 @@
 			};
 			name = Release;
 		};
-		AA000007AA000007AA000007 /* Debug configuration for PBXNativeTarget "MultiFirefoxTests" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefoxTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.9;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefoxNG.app/Contents/MacOS/MultiFirefoxNG";
-			};
-			name = Debug;
-		};
-		AA000008AA000008AA000008 /* Release configuration for PBXNativeTarget "MultiFirefoxTests" */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefoxTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.9;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefoxNG.app/Contents/MacOS/MultiFirefoxNG";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "MultiFirefox" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C01FCF4B08A954540054247B /* Debug configuration for PBXNativeTarget "MultiFirefox" */,
-				C01FCF4C08A954540054247B /* Release configuration for PBXNativeTarget "MultiFirefox" */,
-			);
-			defaultConfigurationName = Release;
-		};
 		AA000009AA000009AA000009 /* Build configuration list for PBXNativeTarget "MultiFirefoxTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA000007AA000007AA000007 /* Debug configuration for PBXNativeTarget "MultiFirefoxTests" */,
 				AA000008AA000008AA000008 /* Release configuration for PBXNativeTarget "MultiFirefoxTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "MultiFirefox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF4B08A954540054247B /* Debug configuration for PBXNativeTarget "MultiFirefox" */,
+				C01FCF4C08A954540054247B /* Release configuration for PBXNativeTarget "MultiFirefox" */,
 			);
 			defaultConfigurationName = Release;
 		};
