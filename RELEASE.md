@@ -114,7 +114,7 @@ a stable identity across releases.
 4. Test: `~/bin/sparkle/sign_update <any file>` prints `sparkle:edSignature=…`.
 5. Add the public key (`generate_keys -p`) to `Info.plist` as `SUPublicEDKey`.
 
-### 3. Feed URL and App Changes
+### ✅ 3. Feed URL and App Changes
 
 - `Info.plist`: `SUFeedURL` =
   `https://weltraumschaf.github.io/MultiFirefox/appcast.xml`.
@@ -130,12 +130,30 @@ a stable identity across releases.
   Save**. Verify:
   `curl -sI https://weltraumschaf.github.io/MultiFirefox/appcast.xml` → `200`.
 
-### 4. Versioning
+### ✅ 4. Versioning
 
-Sparkle compares `CFBundleVersion`. It is currently `2.5.0`, identical to the
-marketing version. Switch `CURRENT_PROJECT_VERSION` to a monotonically
-increasing integer build number (1, 2, 3, …) and bump it on every release.
-`MARKETING_VERSION` stays the human-readable version (`2.5.0`).
+The app uses plain semantic versions (`MAJOR.MINOR.PATCH`), maintained in
+**one place**: `MARKETING_VERSION` in the `MultiFirefox` target.
+`CURRENT_PROJECT_VERSION = $(MARKETING_VERSION)`, so `CFBundleVersion` and
+`CFBundleShortVersionString` are always identical.
+
+- Sparkle compares `CFBundleVersion` component-wise, so
+  `2.5.0 < 2.5.1 < 2.10.0` works. Every release must increase the version.
+- No pre-release suffixes like `2.6.0-beta.1` — Sparkle does not order them
+  by semver rules. Use Sparkle channels (`sparkle:channel`) for betas instead.
+- A broken release cannot be re-shipped under the same version; release the
+  next patch version instead.
+- Do not use `agvtool`: it overwrites the `$(…)` placeholders in `Info.plist`
+  with literal values.
+
+Bump the version (both configurations):
+
+```sh
+sed -i '' 's/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = 3.0.1;/' \
+  MultiFirefox.xcodeproj/project.pbxproj
+```
+
+or in Xcode: target *MultiFirefox* → General → Identity → Version.
 
 ### 5. Homebrew Cask
 
@@ -144,7 +162,7 @@ Casks in a tap must live in a `Casks/` directory. Create
 
 ```ruby
 cask "multifirefox" do
-  version "2.5.0"
+  version "3.0.0"
   sha256 "<sha256 of the release zip>"
 
   url "https://github.com/Weltraumschaf/MultiFirefox/releases/download/v#{version}/MultiFirefoxNG-#{version}.zip"
@@ -262,8 +280,10 @@ Xcode 27.1, and GitHub runners often lag behind.
 1. Create and back up the self-signed certificate; switch Release signing.
 2. Generate and back up Sparkle keys.
 3. Add `SUFeedURL`/`SUPublicEDKey`, enable the updater, fix versioning.
-4. Write `scripts/release.sh` and do one manual release (2.5.0).
+4. Write `scripts/release.sh` and do one manual release (3.0.0 — upstream's
+   last version is 2.5.0; the Swift/SwiftUI rewrite with a new bundle ID is
+   a major version).
 5. Add the cask to the tap and install it via `brew`.
-6. Release 2.5.1 and verify the Sparkle update works without a permission
+6. Release 3.0.1 and verify the Sparkle update works without a permission
    re-prompt.
 7. Move the pipeline to CI.

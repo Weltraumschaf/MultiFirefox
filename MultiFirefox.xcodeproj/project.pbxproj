@@ -305,7 +305,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2.5.0;
+				CURRENT_PROJECT_VERSION = "$(MARKETING_VERSION)";
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
@@ -323,7 +323,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 2.5.0;
+				MARKETING_VERSION = 3.0.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefox;
 				PRODUCT_NAME = MultiFirefoxNG;
@@ -340,7 +340,7 @@
 				CODE_SIGN_ENTITLEMENTS = MultiFirefox/MultiFirefox.entitlements;
 				CODE_SIGN_IDENTITY = "MultiFirefoxNG Signing";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2.5.0;
+				CURRENT_PROJECT_VERSION = "$(MARKETING_VERSION)";
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -357,7 +357,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 2.5.0;
+				MARKETING_VERSION = 3.0.0;
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefox;
 				PRODUCT_NAME = MultiFirefoxNG;
