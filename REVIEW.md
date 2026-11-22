@@ -40,9 +40,14 @@
    *Mitigated: the upstream `SUFeedURL` is removed and the updater is switched off via
    `MultiFirefoxApp.updatesEnabled` (Sparkle stays linked). Before enabling it again, add an own
    `SUFeedURL` and `SUPublicEDKey`.*
-7. **Hardened runtime isn't enabled** (`ENABLE_HARDENED_RUNTIME`), and notarization requires it.
+7. ✅ **Hardened runtime isn't enabled** (`ENABLE_HARDENED_RUNTIME`), and notarization requires it.
    `Info.plist` also has outdated entries: `CFBundleSignature`, `CFBundleDevelopmentRegion = English`
    (should be `en`), and no `CFBundleShortVersionString`.
+   *Fixed: `ENABLE_HARDENED_RUNTIME = YES` for the app's Release build (no extra entitlements
+   needed). Debug stays without it: tests load the ad-hoc signed Sparkle from the build folder, which
+   library validation would reject.
+   `Info.plist` drops `CFBundleSignature`, uses `$(DEVELOPMENT_LANGUAGE)`, and takes the versions from
+   `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` (both 2.5.0).*
 
 ## Code quality
 
