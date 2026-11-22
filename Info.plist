@@ -22,5 +22,7 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSQuitAlwaysKeepsWindows</key>
 	<false/>
+	<key>SUPublicEDKey</key>
+	<string>R+25S7oQBiwGCzQzOe8NwuBFTiHhjsTk6DGiHGgjwDs=</string>
 </dict>
 </plist>

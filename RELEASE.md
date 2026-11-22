@@ -100,7 +100,7 @@ a stable identity across releases.
    MultiFirefoxNG.app/Contents/MacOS/MultiFirefoxNG   # must start, no dyld error
    ```
 
-### 2. Sparkle EdDSA Keys
+### ✅ 2. Sparkle EdDSA Keys
 
 1. Run Sparkle's `generate_keys` once (in the SwiftPM artifacts:
    `…/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys`, or from the
