@@ -46,7 +46,7 @@
 		5571D1940DB2C840003F0FEA /* MITLicense.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = MITLicense.txt; sourceTree = "<group>"; };
 		558BC9300DAE6E0300999EC4 /* Credits.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Credits.rtf; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		8D1107320486CEB800E47090 /* MultiFirefox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MultiFirefox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D1107320486CEB800E47090 /* MultiFirefoxNG.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MultiFirefoxNG.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D5A09E14217688790048256B /* firefox.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = firefox.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -108,7 +108,7 @@
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8D1107320486CEB800E47090 /* MultiFirefox.app */,
+				8D1107320486CEB800E47090 /* MultiFirefoxNG.app */,
 				AA00000DAA00000DAA00000D /* MultiFirefoxTests.xctest */,
 			);
 			name = Products;
@@ -175,7 +175,7 @@
 			);
 			productInstallPath = "$(HOME)/Applications";
 			productName = MultiFirefox;
-			productReference = 8D1107320486CEB800E47090 /* MultiFirefox.app */;
+			productReference = 8D1107320486CEB800E47090 /* MultiFirefoxNG.app */;
 			productType = "com.apple.product-type.application";
 		};
 		AA000006AA000006AA000006 /* MultiFirefoxTests */ = {
@@ -291,8 +291,8 @@
 				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.CodeContortionist.MultiFirefox;
-				PRODUCT_NAME = MultiFirefox;
+				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefox;
+				PRODUCT_NAME = MultiFirefoxNG;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
@@ -316,8 +316,8 @@
 				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				ONLY_ACTIVE_ARCH = NO;
-				PRODUCT_BUNDLE_IDENTIFIER = com.CodeContortionist.MultiFirefox;
-				PRODUCT_NAME = MultiFirefox;
+				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefox;
+				PRODUCT_NAME = MultiFirefoxNG;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
@@ -417,11 +417,11 @@
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.CodeContortionist.MultiFirefoxTests;
+				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefoxTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefox.app/Contents/MacOS/MultiFirefox";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefoxNG.app/Contents/MacOS/MultiFirefoxNG";
 			};
 			name = Debug;
 		};
@@ -433,11 +433,11 @@
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = Q757NR8L6W;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.CodeContortionist.MultiFirefoxTests;
+				PRODUCT_BUNDLE_IDENTIFIER = de.weltraumschaf.MultiFirefoxTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefox.app/Contents/MacOS/MultiFirefox";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MultiFirefoxNG.app/Contents/MacOS/MultiFirefoxNG";
 			};
 			name = Release;
 		};

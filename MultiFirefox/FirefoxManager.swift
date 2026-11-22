@@ -5,11 +5,12 @@ import AppKit
 final class FirefoxManager: ObservableObject {
     @Published var versions: [String] = []
     @Published var profiles: [String] = []
+    /// Set when `profiles.ini` exists but could not be read (e.g. macOS privacy protection).
+    @Published var profileLoadError: String?
 
     private static let applicationsPath = "/Applications"
-    private static let profilesIniPath =
-        ("~/Library/Application Support/Firefox/profiles.ini" as NSString)
-            .expandingTildeInPath
+    nonisolated static let profilesIniURL = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Application Support/Firefox/profiles.ini")
 
     nonisolated static func isFirefoxApp(_ name: String) -> Bool {
         let lower = name.lowercased()
@@ -24,12 +25,22 @@ final class FirefoxManager: ObservableObject {
             .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
+    /// Extracts profile names from `profiles.ini`, reading `Name=` only inside `[ProfileN]` sections.
     nonisolated static func parseProfiles(from iniContent: String) -> [String] {
         var names: [String] = []
+        var inProfileSection = false
         for line in iniContent.components(separatedBy: .newlines) {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("Name=") {
-                names.append(String(trimmed.dropFirst(5)))
+            if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
+                let section = trimmed.dropFirst().dropLast()
+                inProfileSection = section.hasPrefix("Profile")
+                    && !section.dropFirst("Profile".count).isEmpty
+                    && section.dropFirst("Profile".count).allSatisfy(\.isNumber)
+            } else if inProfileSection, trimmed.hasPrefix("Name=") {
+                let name = String(trimmed.dropFirst(5))
+                if !name.isEmpty, !names.contains(name) {
+                    names.append(name)
+                }
             }
         }
         let others = names
@@ -90,11 +101,18 @@ open -na "/Applications/\(version).app" --args -no-remote -P "\(profile)"
 
     func load() {
         versions = Self.loadVersions()
-        profiles = Self.loadProfiles()
+        reloadProfiles()
     }
 
     func reloadProfiles() {
-        profiles = Self.loadProfiles()
+        do {
+            profiles = try Self.loadProfiles(from: Self.profilesIniURL)
+            profileLoadError = nil
+        } catch {
+            NSLog("MultiFirefoxNG: cannot read %@: %@", Self.profilesIniURL.path, String(describing: error))
+            profiles = []
+            profileLoadError = error.localizedDescription
+        }
     }
 
     nonisolated static func loadVersions() -> [String] {
@@ -114,8 +132,16 @@ open -na "/Applications/\(version).app" --args -no-remote -P "\(profile)"
         return result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
-    nonisolated static func loadProfiles() -> [String] {
-        guard let content = try? String(contentsOfFile: profilesIniPath, encoding: .utf8) else {
+    /// Reads profile names from the given `profiles.ini`.
+    ///
+    /// A missing file (Firefox never started) yields an empty list. Any other read failure —
+    /// most notably macOS denying access to another app's data — is thrown so the UI can
+    /// tell "no profiles" apart from "not allowed to look".
+    nonisolated static func loadProfiles(from url: URL) throws -> [String] {
+        let content: String
+        do {
+            content = try String(contentsOf: url, encoding: .utf8)
+        } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
             return []
         }
         return parseProfiles(from: content)

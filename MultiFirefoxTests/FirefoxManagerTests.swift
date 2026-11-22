@@ -1,5 +1,5 @@
 import XCTest
-@testable import MultiFirefox
+@testable import MultiFirefoxNG
 
 final class FirefoxManagerTests: XCTestCase {
 
@@ -20,6 +20,52 @@ final class FirefoxManagerTests: XCTestCase {
 
     func testParseProfilesReturnsEmptyForEmptyInput() {
         XCTAssertEqual(FirefoxManager.parseProfiles(from: ""), [])
+    }
+
+    func testParseProfilesIgnoresNameOutsideProfileSections() {
+        let ini = "[General]\nName=bogus\n[Install123]\nName=alsobogus\n[Profile0]\nName=Work\n[BackgroundTasksProfiles]\nName=bg"
+        XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["Work"])
+    }
+
+    func testParseProfilesHandlesUnorderedSectionsAndCRLF() {
+        let ini = "[General]\r\nVersion=2\r\n\r\n[Profile3]\r\nName=proxy\r\n\r\n[Install2656]\r\nDefault=Profiles/x\r\n\r\n[Profile0]\r\nName=default\r\nDefault=1\r\n"
+        XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["default", "proxy"])
+    }
+
+    func testParseProfilesRemovesDuplicates() {
+        let ini = "[Profile0]\nName=Work\n[Profile1]\nName=Work"
+        XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["Work"])
+    }
+
+    func testLoadProfilesReturnsEmptyWhenFileMissing() throws {
+        let missing = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathComponent("profiles.ini")
+        XCTAssertEqual(try FirefoxManager.loadProfiles(from: missing), [])
+    }
+
+    func testLoadProfilesThrowsWhenFileUnreadable() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+        let ini = tempDir.appendingPathComponent("profiles.ini")
+        try "[Profile0]\nName=Work\n".write(to: ini, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: ini.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: ini.path) }
+
+        XCTAssertThrowsError(try FirefoxManager.loadProfiles(from: ini))
+    }
+
+    func testLoadProfilesReadsFile() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+        let ini = tempDir.appendingPathComponent("profiles.ini")
+        try "[Profile0]\nName=Work\n[Profile1]\nName=default\n".write(to: ini, atomically: true, encoding: .utf8)
+
+        XCTAssertEqual(try FirefoxManager.loadProfiles(from: ini), ["default", "Work"])
     }
 
     func testIsFirefoxAppAcceptsFirefoxVariants() {
