@@ -10,11 +10,13 @@
    message. (`FirefoxManager.swift`, `launch`) *Fixed: a failed launch or Profile Manager start
    shows an alert naming the version (and profile) with the error's description; the app keeps
    running. The error is still logged.*
-3. **Shell injection in Create App.** `buildAppBundle` puts `version` and `profile` straight into a
+3. ✅ **Shell injection in Create App.** `buildAppBundle` puts `version` and `profile` straight into a
    bash script inside double quotes. A profile name containing `"`, `$` or a backtick runs as shell
    code. The same values go unescaped into the Info.plist XML (`&` or `<` breaks it) and into
    `CFBundleIdentifier` (spaces and underscores make an invalid ID). Quote properly for the shell and
-   build the plist with `PropertyListSerialization`.
+   build the plist with `PropertyListSerialization`. *Fixed: the launcher single-quotes the app path
+   and every argument (`shellQuote`), the Info.plist is serialized with `PropertyListSerialization`,
+   and the bundle ID components are reduced to `[a-z0-9-]`, never empty.*
 4. **Create App fails silently.** Every file operation uses `try?`, an existing bundle on the Desktop
    is overwritten, and the user gets no feedback on success or failure.
 5. ✅ **`parseProfiles` takes `Name=` from any section**, not only `[ProfileN]`, and doesn't remove

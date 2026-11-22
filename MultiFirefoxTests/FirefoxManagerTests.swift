@@ -213,8 +213,128 @@ final class FirefoxManagerTests: XCTestCase {
             .appendingPathComponent("Firefox 120-Work.app/Contents/MacOS/launcher")
         let content = try String(contentsOf: launcherURL)
         XCTAssertTrue(content.hasPrefix("#!/bin/bash"))
-        XCTAssertTrue(content.contains("\"/Users/me/Applications/Firefox 120.app\""))
-        XCTAssertTrue(content.contains("Work"))
+        XCTAssertTrue(content.contains("'/Users/me/Applications/Firefox 120.app'"))
+        XCTAssertTrue(content.contains("'Work'"))
+    }
+
+    private let nastyNames = [
+        "Work", "with space", "quote\"d", "$(touch /tmp/pwned)", "`id`", "it's", "a&b", "<x>",
+        "under_score", "$HOME", "back\\slash", "'", "''", "", "new\nline",
+    ]
+
+    /// Runs `/bin/sh -c "printf %s <word>"` and returns what the shell printed.
+    private func shellRoundTrip(_ word: String) throws -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "printf %s \(word)"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        try process.run()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        XCTAssertEqual(process.terminationStatus, 0)
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    func testShellQuoteWrapsInSingleQuotes() {
+        XCTAssertEqual(FirefoxManager.shellQuote("Work"), "'Work'")
+        XCTAssertEqual(FirefoxManager.shellQuote("it's"), "'it'\\''s'")
+        XCTAssertEqual(FirefoxManager.shellQuote(""), "''")
+    }
+
+    func testShellQuoteRoundTripsThroughShell() throws {
+        for name in nastyNames {
+            XCTAssertEqual(try shellRoundTrip(FirefoxManager.shellQuote(name)), name, name)
+        }
+    }
+
+    func testLauncherScriptQuotesPathAndProfile() {
+        let script = FirefoxManager.launcherScript(
+            appURL: URL(fileURLWithPath: "/Users/me/Applications/Fire'fox $1.app"), profile: "$(rm -rf ~)")
+        XCTAssertEqual(script, """
+            #!/bin/bash
+            exec /usr/bin/open -n -a '/Users/me/Applications/Fire'\\''fox $1.app' --args '-no-remote' '-P' '$(rm -rf ~)'
+
+            """)
+    }
+
+    func testLauncherScriptArgumentsRoundTripThroughShell() throws {
+        for name in nastyNames {
+            let script = FirefoxManager.launcherScript(
+                appURL: URL(fileURLWithPath: "/Applications/\(name.isEmpty ? "x" : name).app"), profile: name)
+            let prefix = "#!/bin/bash\nexec /usr/bin/open "
+            XCTAssertTrue(script.hasPrefix(prefix))
+            // Print each word the shell would pass to `open`, NUL-terminated, instead of running it.
+            let words = String(script.dropFirst(prefix.count))
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/sh")
+            process.arguments = ["-c", "printf '%s\\0' \(words)"]
+            let pipe = Pipe()
+            process.standardOutput = pipe
+            try process.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            let printed = String(decoding: data, as: UTF8.self).split(separator: "\0", omittingEmptySubsequences: false)
+                .dropLast().map(String.init)
+            XCTAssertEqual(printed, ["-n", "-a", "/Applications/\(name.isEmpty ? "x" : name).app",
+                                     "--args", "-no-remote", "-P", name], name)
+        }
+    }
+
+    func testBundleIdentifierComponentSanitizes() {
+        XCTAssertEqual(FirefoxManager.bundleIdentifierComponent("Firefox Nightly"), "firefox-nightly")
+        XCTAssertEqual(FirefoxManager.bundleIdentifierComponent("under_score"), "under-score")
+        XCTAssertEqual(FirefoxManager.bundleIdentifierComponent("  a__b..c  "), "a-b-c")
+        XCTAssertEqual(FirefoxManager.bundleIdentifierComponent("Grüße"), "gr-e")
+        XCTAssertEqual(FirefoxManager.bundleIdentifierComponent("$(x)"), "x")
+        XCTAssertEqual(FirefoxManager.bundleIdentifierComponent(""), "unnamed")
+        XCTAssertEqual(FirefoxManager.bundleIdentifierComponent("___"), "unnamed")
+    }
+
+    func testBundleIdentifierIsValidForNastyNames() {
+        XCTAssertEqual(FirefoxManager.bundleIdentifier(version: "Firefox 120", profile: "My_Work"),
+                       "com.multifirefox.shortcut.firefox-120-my-work")
+        let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-")
+        for name in nastyNames {
+            let id = FirefoxManager.bundleIdentifier(version: "Firefox Developer Edition", profile: name)
+            XCTAssertTrue(id.unicodeScalars.allSatisfy(allowed.contains), id)
+            XCTAssertFalse(id.contains(".."), id)
+            XCTAssertFalse(id.hasSuffix("-") || id.hasSuffix("."), id)
+        }
+    }
+
+    func testInfoPlistRoundTripsExactNames() throws {
+        for name in nastyNames {
+            let data = try FirefoxManager.infoPlistData(version: "Firefox <&> 120", profile: name)
+            let plist = try XCTUnwrap(
+                PropertyListSerialization.propertyList(from: data, format: nil) as? [String: String])
+            XCTAssertEqual(plist["CFBundleName"], "Firefox <&> 120-\(name)")
+            XCTAssertEqual(plist["CFBundleExecutable"], "launcher")
+            XCTAssertEqual(plist["CFBundlePackageType"], "APPL")
+            XCTAssertEqual(plist["CFBundleIdentifier"],
+                           FirefoxManager.bundleIdentifier(version: "Firefox <&> 120", profile: name))
+        }
+    }
+
+    func testBuildAppBundleWritesParsableFilesForNastyProfile() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+        let profile = "a&b <\"$(id)\"> `x` it's"
+
+        FirefoxManager.buildAppBundle(
+            version: "Firefox", appURL: URL(fileURLWithPath: "/Applications/Firefox.app"),
+            profile: profile, in: tempDir)
+
+        let appDir = tempDir.appendingPathComponent("Firefox-\(profile).app")
+        let data = try Data(contentsOf: appDir.appendingPathComponent("Contents/Info.plist"))
+        let plist = try XCTUnwrap(
+            PropertyListSerialization.propertyList(from: data, format: nil) as? [String: String])
+        XCTAssertEqual(plist["CFBundleName"], "Firefox-\(profile)")
+        let script = try String(contentsOf: appDir.appendingPathComponent("Contents/MacOS/launcher"))
+        XCTAssertEqual(script, FirefoxManager.launcherScript(
+            appURL: URL(fileURLWithPath: "/Applications/Firefox.app"), profile: profile))
     }
 
     func testLaunchArgumentsStartProfileWithoutRemote() {

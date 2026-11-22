@@ -112,6 +112,49 @@ final class FirefoxManager: ObservableObject {
         return defaultName.map { [$0] + others } ?? others
     }
 
+    /// Quotes `value` as one POSIX shell word: wrapped in single quotes, with each `'` written as
+    /// `'\''`. Nothing inside single quotes is expanded, so the value is passed through verbatim.
+    nonisolated static func shellQuote(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    /// The launcher script of a shortcut app: opens a new instance of the Firefox at `appURL` with
+    /// `profile`, the same way the main window launches it.
+    nonisolated static func launcherScript(appURL: URL, profile: String) -> String {
+        let arguments = launchArguments(profile: profile).map(shellQuote).joined(separator: " ")
+        return "#!/bin/bash\nexec /usr/bin/open -n -a \(shellQuote(appURL.path)) --args \(arguments)\n"
+    }
+
+    /// Turns `value` into a bundle identifier component: lowercased, every run of characters other
+    /// than ASCII letters and digits replaced by one `-`, and `-` trimmed from the ends. Never empty.
+    nonisolated static func bundleIdentifierComponent(_ value: String) -> String {
+        var result = ""
+        for scalar in value.lowercased().unicodeScalars {
+            if scalar.isASCII, CharacterSet.alphanumerics.contains(scalar) {
+                result.unicodeScalars.append(scalar)
+            } else if !result.isEmpty, !result.hasSuffix("-") {
+                result.append("-")
+            }
+        }
+        while result.hasSuffix("-") { result.removeLast() }
+        return result.isEmpty ? "unnamed" : result
+    }
+
+    nonisolated static func bundleIdentifier(version: String, profile: String) -> String {
+        "com.multifirefox.shortcut.\(bundleIdentifierComponent(version))-\(bundleIdentifierComponent(profile))"
+    }
+
+    /// The Info.plist of a shortcut app, serialized as XML so any characters in the names are escaped.
+    nonisolated static func infoPlistData(version: String, profile: String) throws -> Data {
+        let plist: [String: Any] = [
+            "CFBundleExecutable": "launcher",
+            "CFBundleName": "\(version)-\(profile)",
+            "CFBundlePackageType": "APPL",
+            "CFBundleIdentifier": bundleIdentifier(version: version, profile: profile),
+        ]
+        return try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
+    }
+
     nonisolated static func buildAppBundle(
         version: String, appURL: URL, profile: String, in directory: URL
     ) {
@@ -123,30 +166,10 @@ final class FirefoxManager: ObservableObject {
         let fm = FileManager.default
         try? fm.createDirectory(at: macosDir, withIntermediateDirectories: true)
 
-        let script = """
-#!/bin/bash
-open -na "\(appURL.path)" --args -no-remote -P "\(profile)"
-"""
-        try? script.write(to: launcher, atomically: true, encoding: .utf8)
+        try? launcherScript(appURL: appURL, profile: profile)
+            .write(to: launcher, atomically: true, encoding: .utf8)
 
-        let bundleId = "com.multifirefox.shortcut.\(version.lowercased().replacingOccurrences(of: " ", with: "-"))-\(profile.lowercased())"
-        let plist = """
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key>
-    <string>launcher</string>
-    <key>CFBundleName</key>
-    <string>\(version)-\(profile)</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleIdentifier</key>
-    <string>\(bundleId)</string>
-</dict>
-</plist>
-"""
-        try? plist.write(to: infoPlist, atomically: true, encoding: .utf8)
+        try? infoPlistData(version: version, profile: profile).write(to: infoPlist, options: .atomic)
 
         try? FileManager.default.setAttributes(
             [.posixPermissions: 0o755],
