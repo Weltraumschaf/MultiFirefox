@@ -223,24 +223,40 @@ open -na "\(appURL.path)" --args -no-remote -P "\(profile)"
 
     // MARK: - Launching
 
-    func launch(version: FirefoxVersion, profile: String) {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        p.arguments = [
-            "-na", version.url.path,
-            "--args", "-no-remote", "-P", profile
-        ]
-        try? p.run()
+    /// Command line arguments that start Firefox with `profile` as an instance of its own.
+    nonisolated static func launchArguments(profile: String) -> [String] {
+        ["-no-remote", "-P", profile]
+    }
+
+    /// Command line arguments that open Firefox's Profile Manager.
+    nonisolated static let profileManagerArguments = ["--profilemanager"]
+
+    /// How to open a Firefox bundle: always as a new instance, so it runs beside any Firefox
+    /// that is already open, with the given command line arguments.
+    nonisolated static func openConfiguration(arguments: [String]) -> NSWorkspace.OpenConfiguration {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        configuration.arguments = arguments
+        return configuration
+    }
+
+    /// Starts `version` with `profile` and quits this app once Firefox has been launched.
+    ///
+    /// If the launch fails the error is thrown and this app keeps running.
+    func launch(version: FirefoxVersion, profile: String) async throws {
+        try await open(version, arguments: Self.launchArguments(profile: profile))
         NSApplication.shared.terminate(nil)
     }
 
-    func openProfileManager(version: FirefoxVersion) {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        p.arguments = [
-            "-n", version.url.path,
-            "--args", "--profilemanager"
-        ]
-        try? p.run()
+    /// Opens the Profile Manager of `version`; a failed launch is thrown.
+    func openProfileManager(version: FirefoxVersion) async throws {
+        try await open(version, arguments: Self.profileManagerArguments)
+    }
+
+    private func open(_ version: FirefoxVersion, arguments: [String]) async throws {
+        _ = try await NSWorkspace.shared.openApplication(
+            at: version.url,
+            configuration: Self.openConfiguration(arguments: arguments)
+        )
     }
 }

@@ -77,9 +77,7 @@ struct ContentView: View {
                     .onTapGesture(count: 2) {
                         selectedVersion = version.id
                         guard let profile = selectedProfile else { return }
-                        UserDefaults.standard.set(version.name, forKey: "lastVersion")
-                        UserDefaults.standard.set(profile, forKey: "lastProfile")
-                        manager.launch(version: version, profile: profile)
+                        launch(version, profile: profile)
                     }
             }
         }
@@ -119,15 +117,32 @@ struct ContentView: View {
 
     private func launch() {
         guard let version = selectedFirefox, let profile = selectedProfile else { return }
+        launch(version, profile: profile)
+    }
+
+    private func launch(_ version: FirefoxVersion, profile: String) {
         UserDefaults.standard.set(version.name, forKey: "lastVersion")
         UserDefaults.standard.set(profile, forKey: "lastProfile")
-        manager.launch(version: version, profile: profile)
+        Task {
+            do {
+                try await manager.launch(version: version, profile: profile)
+            } catch {
+                NSLog("MultiFirefoxNG: cannot launch %@: %@", version.url.path, String(describing: error))
+            }
+        }
     }
 
     private func openProfileManager() {
         guard let version = selectedFirefox else { return }
         needsProfileReload = true
-        manager.openProfileManager(version: version)
+        Task {
+            do {
+                try await manager.openProfileManager(version: version)
+            } catch {
+                needsProfileReload = false
+                NSLog("MultiFirefoxNG: cannot open Profile Manager of %@: %@", version.url.path, String(describing: error))
+            }
+        }
     }
 
     private func createApp() {

@@ -216,4 +216,19 @@ final class FirefoxManagerTests: XCTestCase {
         XCTAssertTrue(content.contains("\"/Users/me/Applications/Firefox 120.app\""))
         XCTAssertTrue(content.contains("Work"))
     }
+
+    func testLaunchArgumentsStartProfileWithoutRemote() {
+        XCTAssertEqual(FirefoxManager.launchArguments(profile: "Work \"x\" $y"),
+                       ["-no-remote", "-P", "Work \"x\" $y"])
+    }
+
+    func testProfileManagerArguments() {
+        XCTAssertEqual(FirefoxManager.profileManagerArguments, ["--profilemanager"])
+    }
+
+    func testOpenConfigurationCreatesNewInstanceWithArguments() {
+        let configuration = FirefoxManager.openConfiguration(arguments: ["-P", "Work"])
+        XCTAssertTrue(configuration.createsNewApplicationInstance)
+        XCTAssertEqual(configuration.arguments, ["-P", "Work"])
+    }
 }
