@@ -12,6 +12,18 @@ struct FirefoxVersion: Identifiable, Hashable, Sendable {
     var id: String { name }
 }
 
+/// Why Create App could not make a shortcut app.
+enum CreateAppError: LocalizedError, Equatable {
+    /// An app with the same name already exists at this URL.
+    case alreadyExists(URL)
+
+    var errorDescription: String? {
+        switch self {
+        case let .alreadyExists(url): "\"\(url.lastPathComponent)\" already exists."
+        }
+    }
+}
+
 @MainActor
 final class FirefoxManager: ObservableObject {
     @Published var versions: [FirefoxVersion] = []
@@ -155,32 +167,65 @@ final class FirefoxManager: ObservableObject {
         return try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
     }
 
-    nonisolated static func buildAppBundle(
-        version: String, appURL: URL, profile: String, in directory: URL
-    ) {
-        let appDir = directory.appendingPathComponent("\(version)-\(profile).app")
-        let macosDir = appDir.appendingPathComponent("Contents/MacOS")
-        let launcher = macosDir.appendingPathComponent("launcher")
-        let infoPlist = appDir.appendingPathComponent("Contents/Info.plist")
-
-        let fm = FileManager.default
-        try? fm.createDirectory(at: macosDir, withIntermediateDirectories: true)
-
-        try? launcherScript(appURL: appURL, profile: profile)
-            .write(to: launcher, atomically: true, encoding: .utf8)
-
-        try? infoPlistData(version: version, profile: profile).write(to: infoPlist, options: .atomic)
-
-        try? FileManager.default.setAttributes(
-            [.posixPermissions: 0o755],
-            ofItemAtPath: launcher.path
-        )
+    /// Where the shortcut app for `version` and `profile` goes inside `directory`.
+    nonisolated static func appBundleURL(version: String, profile: String, in directory: URL) -> URL {
+        directory.appendingPathComponent("\(version)-\(profile).app")
     }
 
-    func createApplication(version: FirefoxVersion, profile: String) {
-        let desktop = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Desktop")
-        Self.buildAppBundle(version: version.name, appURL: version.url, profile: profile, in: desktop)
+    /// Moves an existing shortcut app to the Trash, so replacing it can be undone.
+    nonisolated static func moveToTrash(_ url: URL) throws {
+        try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+    }
+
+    /// Builds the shortcut app for `version` and `profile` in `directory` and returns its URL.
+    ///
+    /// The bundle is assembled in a temporary folder first and only moved into place when it is
+    /// complete, so a failure leaves no half-built app behind. If the app already exists,
+    /// `CreateAppError.alreadyExists` is thrown unless `replacing` is set; then the old app is handed
+    /// to `removeExisting` (the Trash by default) before the new one is moved in.
+    @discardableResult
+    nonisolated static func buildAppBundle(
+        version: String, appURL: URL, profile: String, in directory: URL,
+        replacing: Bool = false,
+        removeExisting: (URL) throws -> Void = moveToTrash
+    ) throws -> URL {
+        let fm = FileManager.default
+        let appDir = appBundleURL(version: version, profile: profile, in: directory)
+        let exists = (try? appDir.checkResourceIsReachable()) == true
+        if exists, !replacing { throw CreateAppError.alreadyExists(appDir) }
+
+        let staging = try fm.url(
+            for: .itemReplacementDirectory, in: .userDomainMask,
+            appropriateFor: directory, create: true)
+        defer { try? fm.removeItem(at: staging) }
+
+        let stagedApp = staging.appendingPathComponent(appDir.lastPathComponent)
+        let macosDir = stagedApp.appendingPathComponent("Contents/MacOS")
+        let launcher = macosDir.appendingPathComponent("launcher")
+        let infoPlist = stagedApp.appendingPathComponent("Contents/Info.plist")
+
+        try fm.createDirectory(at: macosDir, withIntermediateDirectories: true)
+        try launcherScript(appURL: appURL, profile: profile)
+            .write(to: launcher, atomically: true, encoding: .utf8)
+        try infoPlistData(version: version, profile: profile).write(to: infoPlist, options: .atomic)
+        try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: launcher.path)
+
+        if exists { try removeExisting(appDir) }
+        try fm.moveItem(at: stagedApp, to: appDir)
+        return appDir
+    }
+
+    nonisolated static var desktopDirectory: URL {
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop")
+    }
+
+    /// Creates the shortcut app on the Desktop and returns its URL; see `buildAppBundle`.
+    func createApplication(
+        version: FirefoxVersion, profile: String, replacing: Bool = false
+    ) throws -> URL {
+        try Self.buildAppBundle(
+            version: version.name, appURL: version.url, profile: profile,
+            in: Self.desktopDirectory, replacing: replacing)
     }
 
     // MARK: - Init and loading

@@ -188,7 +188,7 @@ final class FirefoxManagerTests: XCTestCase {
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        FirefoxManager.buildAppBundle(
+        try FirefoxManager.buildAppBundle(
             version: "Firefox 120", appURL: URL(fileURLWithPath: "/Users/me/Applications/Firefox 120.app"),
             profile: "Work", in: tempDir)
 
@@ -205,7 +205,7 @@ final class FirefoxManagerTests: XCTestCase {
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        FirefoxManager.buildAppBundle(
+        try FirefoxManager.buildAppBundle(
             version: "Firefox 120", appURL: URL(fileURLWithPath: "/Users/me/Applications/Firefox 120.app"),
             profile: "Work", in: tempDir)
 
@@ -323,7 +323,7 @@ final class FirefoxManagerTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: tempDir) }
         let profile = "a&b <\"$(id)\"> `x` it's"
 
-        FirefoxManager.buildAppBundle(
+        try FirefoxManager.buildAppBundle(
             version: "Firefox", appURL: URL(fileURLWithPath: "/Applications/Firefox.app"),
             profile: profile, in: tempDir)
 
@@ -366,5 +366,124 @@ final class FirefoxManagerTests: XCTestCase {
 
     func testUnreadableAlertIncludesReason() {
         XCTAssertTrue(AppAlert.unreadable(reason: "Operation not permitted").message.contains("(Operation not permitted)"))
+    }
+
+    private func makeTempDir() throws -> URL {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        addTeardownBlock {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: dir.path)
+            try? FileManager.default.removeItem(at: dir)
+        }
+        return dir
+    }
+
+    private let firefoxURL = URL(fileURLWithPath: "/Applications/Firefox.app")
+
+    func testBuildAppBundleReturnsBundleURL() throws {
+        let dir = try makeTempDir()
+        let bundle = try FirefoxManager.buildAppBundle(
+            version: "Firefox", appURL: firefoxURL, profile: "Work", in: dir)
+        XCTAssertEqual(bundle.path, dir.appendingPathComponent("Firefox-Work.app").path)
+        XCTAssertEqual(bundle.path, FirefoxManager.appBundleURL(version: "Firefox", profile: "Work", in: dir).path)
+        let attributes = try FileManager.default.attributesOfItem(
+            atPath: bundle.appendingPathComponent("Contents/MacOS/launcher").path)
+        XCTAssertEqual((attributes[.posixPermissions] as? NSNumber)?.intValue, 0o755)
+    }
+
+    func testBuildAppBundleThrowsWhenAppExistsAndKeepsIt() throws {
+        let dir = try makeTempDir()
+        let bundle = dir.appendingPathComponent("Firefox-Work.app")
+        try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
+        let marker = bundle.appendingPathComponent("marker")
+        try Data("old".utf8).write(to: marker)
+
+        XCTAssertThrowsError(try FirefoxManager.buildAppBundle(
+            version: "Firefox", appURL: firefoxURL, profile: "Work", in: dir,
+            removeExisting: { _ in XCTFail("must not remove without replacing") })
+        ) { error in
+            guard case let .alreadyExists(url)? = error as? CreateAppError else {
+                return XCTFail("unexpected error \(error)")
+            }
+            XCTAssertEqual(url.path, bundle.path)
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: marker.path))
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: bundle.appendingPathComponent("Contents").path))
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: dir.path), ["Firefox-Work.app"])
+    }
+
+    func testBuildAppBundleReplacesExistingAppWhenAsked() throws {
+        let dir = try makeTempDir()
+        let bundle = dir.appendingPathComponent("Firefox-Work.app")
+        try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
+        try Data("old".utf8).write(to: bundle.appendingPathComponent("marker"))
+        var removed: [URL] = []
+
+        try FirefoxManager.buildAppBundle(
+            version: "Firefox", appURL: firefoxURL, profile: "Work", in: dir, replacing: true,
+            removeExisting: { url in
+                removed.append(url)
+                try FileManager.default.removeItem(at: url)
+            })
+
+        XCTAssertEqual(removed.map(\.path), [bundle.path])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: bundle.appendingPathComponent("marker").path))
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: bundle.appendingPathComponent("Contents/MacOS/launcher").path))
+    }
+
+    func testBuildAppBundleKeepsExistingAppWhenRemovalFails() throws {
+        let dir = try makeTempDir()
+        let bundle = dir.appendingPathComponent("Firefox-Work.app")
+        try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
+        struct RemovalFailed: Error {}
+
+        XCTAssertThrowsError(try FirefoxManager.buildAppBundle(
+            version: "Firefox", appURL: firefoxURL, profile: "Work", in: dir, replacing: true,
+            removeExisting: { _ in throw RemovalFailed() })
+        ) { error in
+            XCTAssertTrue(error is RemovalFailed)
+        }
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: bundle.path), [])
+    }
+
+    func testBuildAppBundlePropagatesErrorAndLeavesNothingBehind() throws {
+        let dir = try makeTempDir()
+        try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: dir.path)
+
+        XCTAssertThrowsError(try FirefoxManager.buildAppBundle(
+            version: "Firefox", appURL: firefoxURL, profile: "Work", in: dir))
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: dir.path), [])
+    }
+
+    func testBuildAppBundleThrowsForMissingDestination() throws {
+        let missing = try makeTempDir().appendingPathComponent("missing", isDirectory: true)
+        XCTAssertThrowsError(try FirefoxManager.buildAppBundle(
+            version: "Firefox", appURL: firefoxURL, profile: "Work", in: missing))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: missing.path))
+    }
+
+    func testAlreadyExistsErrorNamesTheApp() {
+        let error = CreateAppError.alreadyExists(URL(fileURLWithPath: "/Users/me/Desktop/Firefox-Work.app"))
+        XCTAssertEqual(error.localizedDescription, "\"Firefox-Work.app\" already exists.")
+    }
+
+    func testCreateAppAlerts() {
+        let bundle = URL(fileURLWithPath: "/Users/me/Desktop/Firefox-Work.app")
+        let created = AppAlert.appCreated(bundle: bundle)
+        XCTAssertEqual(created.title, "App created")
+        XCTAssertEqual(created.message, "\"Firefox-Work.app\" was created in /Users/me/Desktop.")
+
+        let exists = AppAlert.appExists(
+            version: FirefoxVersion(name: "Firefox", url: firefoxURL), profile: "Work", bundle: bundle)
+        XCTAssertEqual(exists.title, "App already exists")
+        XCTAssertTrue(exists.message.contains("\"Firefox-Work.app\" already exists in /Users/me/Desktop."))
+        XCTAssertTrue(exists.message.contains("Trash"))
+
+        let failed = AppAlert.createAppFailed(version: "Firefox", profile: "Work", reason: "Disk full.")
+        XCTAssertEqual(failed.title, "Cannot create app")
+        XCTAssertEqual(failed.message,
+                       "The app for Firefox with the profile \"Work\" could not be created.\n\nDisk full.")
     }
 }

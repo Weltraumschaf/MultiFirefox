@@ -17,8 +17,11 @@
    build the plist with `PropertyListSerialization`. *Fixed: the launcher single-quotes the app path
    and every argument (`shellQuote`), the Info.plist is serialized with `PropertyListSerialization`,
    and the bundle ID components are reduced to `[a-z0-9-]`, never empty.*
-4. **Create App fails silently.** Every file operation uses `try?`, an existing bundle on the Desktop
-   is overwritten, and the user gets no feedback on success or failure.
+4. ✅ **Create App fails silently.** Every file operation uses `try?`, an existing bundle on the Desktop
+   is overwritten, and the user gets no feedback on success or failure. *Fixed: the bundle is built
+   in a temporary folder and only moved into place when complete; errors are thrown and shown in an
+   alert. An existing app is only replaced after the user confirms, and the old one goes to the
+   Trash. Success shows where the app was created, with a "Show in Finder" button.*
 5. ✅ **`parseProfiles` takes `Name=` from any section**, not only `[ProfileN]`, and doesn't remove
    duplicates. Duplicate names break `List(id: \.self)`. It also picks the default profile by the name
    "default" rather than the `Default=1` flag in the file. *Fixed: sections are filtered, duplicates

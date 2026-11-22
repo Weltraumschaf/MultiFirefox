@@ -52,7 +52,18 @@ struct ContentView: View {
             case .unreadable:
                 Button("Open Privacy & Security") { openPrivacySettings() }
                 Button("Cancel", role: .cancel) {}
-            case .launchFailed, .profileManagerFailed:
+            case let .appExists(version, profile, _):
+                Button("Replace", role: .destructive) {
+                    // Run after this alert is dismissed, so the result alert is not cleared with it.
+                    Task { createApp(version, profile: profile, replacing: true) }
+                }
+                Button("Cancel", role: .cancel) {}
+            case let .appCreated(bundle):
+                Button("Show in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([bundle])
+                }
+                Button("OK", role: .cancel) {}
+            case .launchFailed, .profileManagerFailed, .createAppFailed:
                 Button("OK", role: .cancel) {}
             }
         } message: { alert in
@@ -150,7 +161,24 @@ struct ContentView: View {
 
     private func createApp() {
         guard let version = selectedFirefox, let profile = selectedProfile else { return }
-        manager.createApplication(version: version, profile: profile)
+        createApp(version, profile: profile, replacing: false)
+    }
+
+    /// Creates the shortcut app and reports the outcome; an existing app is only replaced after
+    /// the user confirmed it.
+    private func createApp(_ version: FirefoxVersion, profile: String, replacing: Bool) {
+        do {
+            let bundle = try manager.createApplication(
+                version: version, profile: profile, replacing: replacing)
+            activeAlert = .appCreated(bundle: bundle)
+        } catch let CreateAppError.alreadyExists(bundle) {
+            activeAlert = .appExists(version: version, profile: profile, bundle: bundle)
+        } catch {
+            NSLog("MultiFirefoxNG: cannot create app for %@ / %@: %@", version.name, profile, String(describing: error))
+            activeAlert = .createAppFailed(
+                version: version.name, profile: profile, reason: error.localizedDescription
+            )
+        }
     }
 
     private func checkProfiles() {
@@ -188,6 +216,9 @@ enum AppAlert: Identifiable, Hashable {
     case unreadable(reason: String)
     case launchFailed(version: String, profile: String, reason: String)
     case profileManagerFailed(version: String, reason: String)
+    case appExists(version: FirefoxVersion, profile: String, bundle: URL)
+    case appCreated(bundle: URL)
+    case createAppFailed(version: String, profile: String, reason: String)
 
     var id: Self { self }
 
@@ -197,6 +228,9 @@ enum AppAlert: Identifiable, Hashable {
         case .unreadable: "Cannot read Firefox profiles"
         case .launchFailed: "Cannot launch Firefox"
         case .profileManagerFailed: "Cannot open Profile Manager"
+        case .appExists: "App already exists"
+        case .appCreated: "App created"
+        case .createAppFailed: "Cannot create app"
         }
     }
 
@@ -210,6 +244,12 @@ enum AppAlert: Identifiable, Hashable {
             "\(version) could not be started with the profile \"\(profile)\".\n\n\(reason)"
         case let .profileManagerFailed(version, reason):
             "The Profile Manager of \(version) could not be opened.\n\n\(reason)"
+        case let .appExists(_, _, bundle):
+            "\"\(bundle.lastPathComponent)\" already exists in \(bundle.deletingLastPathComponent().path). Replace it? The old app is moved to the Trash."
+        case let .appCreated(bundle):
+            "\"\(bundle.lastPathComponent)\" was created in \(bundle.deletingLastPathComponent().path)."
+        case let .createAppFailed(version, profile, reason):
+            "The app for \(version) with the profile \"\(profile)\" could not be created.\n\n\(reason)"
         }
     }
 }
