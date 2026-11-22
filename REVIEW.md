@@ -59,9 +59,11 @@
     *Fixed: launch and Profile Manager use `NSWorkspace.openApplication` as a new instance with the
     same arguments. Errors are thrown to the caller (logged for now, see #2), and the app only quits
     after a successful launch. The Create App launcher script is unchanged (#3).*
-11. **Double-click to launch is attached to the row text** with `onTapGesture(count: 2)`, which can
+11. ✅ **Double-click to launch is attached to the row text** with `onTapGesture(count: 2)`, which can
     delay single-click selection. `.contextMenu(forSelectionType:primaryAction:)` (macOS 13+) is the
     intended API for this.
+    *Fixed: the version list uses `.contextMenu(forSelectionType:menu:primaryAction:)`; double-click
+    launches, and a "Launch" context menu item was added.*
 12. **Possible gap with Firefox's new profiles (unverified):** Firefox's newer profile switcher keeps
     data under `Profile Groups/`. Profiles made through it may not be listed in `profiles.ini`, so this
     app wouldn't show them.

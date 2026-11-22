@@ -80,13 +80,16 @@ struct ContentView: View {
             List(manager.versions, selection: $selectedVersion) { version in
                 Text(version.name)
                     .help(version.url.path)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
-                    .onTapGesture(count: 2) {
-                        selectedVersion = version.id
-                        guard let profile = selectedProfile else { return }
-                        launch(version, profile: profile)
-                    }
+            }
+            .contextMenu(forSelectionType: String.self) { ids in
+                if let version = firefox(for: ids) {
+                    Button("Launch") { launch(version) }
+                        .disabled(selectedProfile == nil)
+                }
+            } primaryAction: { ids in
+                // Double-click (or Return) on a row launches it with the selected profile.
+                guard let version = firefox(for: ids) else { return }
+                launch(version)
             }
         }
     }
@@ -126,6 +129,18 @@ struct ContentView: View {
     private func launch() {
         guard let version = selectedFirefox, let profile = selectedProfile else { return }
         launch(version, profile: profile)
+    }
+
+    /// Launches `version` with the selected profile, if one is selected.
+    private func launch(_ version: FirefoxVersion) {
+        guard let profile = selectedProfile else { return }
+        launch(version, profile: profile)
+    }
+
+    /// The version a context menu or double-click acts on: exactly one row, resolved to its bundle.
+    private func firefox(for ids: Set<String>) -> FirefoxVersion? {
+        guard ids.count == 1, let id = ids.first else { return nil }
+        return manager.versions.first { $0.id == id }
     }
 
     private func launch(_ version: FirefoxVersion, profile: String) {
