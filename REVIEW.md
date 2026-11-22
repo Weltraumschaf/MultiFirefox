@@ -17,8 +17,9 @@
    is overwritten, and the user gets no feedback on success or failure.
 5. ✅ **`parseProfiles` takes `Name=` from any section**, not only `[ProfileN]`, and doesn't remove
    duplicates. Duplicate names break `List(id: \.self)`. It also picks the default profile by the name
-   "default" rather than the `Default=1` flag in the file. *Section filtering and de-duplication are
-   fixed; the `Default=1` flag is still ignored.*
+   "default" rather than the `Default=1` flag in the file. *Fixed: sections are filtered, duplicates
+   removed, and the default comes from `[Install…] Default=<path>`, then a `[ProfileN]` with
+   `Default=1`, then the name "default". It is listed first and auto-selected.*
 
 ## Security / distribution
 

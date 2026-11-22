@@ -32,6 +32,31 @@ final class FirefoxManagerTests: XCTestCase {
         XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["default", "proxy"])
     }
 
+    func testParseProfilesPutsProfileFlaggedDefaultFirst() {
+        let ini = "[Profile0]\nName=default\n[Profile1]\nName=Work\nDefault=1\n[Profile2]\nName=Alpha"
+        XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["Work", "Alpha", "default"])
+    }
+
+    func testParseProfilesPrefersInstallDefaultOverProfileFlag() {
+        let ini = "[Install4F96D1932A9F858E]\nDefault=Profiles/b.work\nLocked=1\n[Profile0]\nName=default\nPath=Profiles/a.default\nDefault=1\n[Profile1]\nName=Work\nPath=Profiles/b.work"
+        XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["Work", "default"])
+    }
+
+    func testParseProfilesMatchesInstallDefaultWhenInstallSectionComesLast() {
+        let ini = "[Profile0]\nName=Alpha\nPath=Profiles/a.alpha\n[Profile1]\nName=Zebra\nPath=Profiles/z.zebra\n[Install123]\nDefault=Profiles/z.zebra"
+        XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["Zebra", "Alpha"])
+    }
+
+    func testParseProfilesFallsBackToProfileFlagWhenInstallDefaultUnknown() {
+        let ini = "[Install123]\nDefault=Profiles/gone\n[Profile0]\nName=Alpha\nPath=Profiles/a\n[Profile1]\nName=Work\nPath=Profiles/w\nDefault=1"
+        XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["Work", "Alpha"])
+    }
+
+    func testParseProfilesIgnoresDefaultFlagOutsideProfileSections() {
+        let ini = "[General]\nDefault=1\n[Profile0]\nName=Zebra\n[Profile1]\nName=Alpha"
+        XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["Alpha", "Zebra"])
+    }
+
     func testParseProfilesRemovesDuplicates() {
         let ini = "[Profile0]\nName=Work\n[Profile1]\nName=Work"
         XCTAssertEqual(FirefoxManager.parseProfiles(from: ini), ["Work"])

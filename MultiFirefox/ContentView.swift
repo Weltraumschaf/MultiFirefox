@@ -23,8 +23,8 @@ struct ContentView: View {
             checkProfiles()
         }
         .onChange(of: selectedVersion) { newVersion in
-            guard let newVersion else { return }
-            autoSelectProfile(for: newVersion)
+            guard newVersion != nil else { return }
+            autoSelectProfile()
         }
         .onReceive(
             NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
@@ -152,12 +152,8 @@ struct ContentView: View {
             ?? manager.profiles.first
     }
 
-    private func autoSelectProfile(for version: String) {
-        let isPlain = version.lowercased() == "firefox"
-        if isPlain, let def = manager.profiles.first(where: { $0 == "default" }) {
-            selectedProfile = def
-            return
-        }
+    /// Selects Firefox's default profile, which `parseProfiles(from:)` always lists first.
+    private func autoSelectProfile() {
         selectedProfile = manager.profiles.first
     }
 }

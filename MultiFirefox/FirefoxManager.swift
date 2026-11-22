@@ -30,27 +30,67 @@ final class FirefoxManager: ObservableObject {
     }
 
     /// Extracts profile names from `profiles.ini`, reading `Name=` only inside `[ProfileN]` sections.
+    ///
+    /// The default profile comes first, the rest are sorted alphabetically. The default is, in order
+    /// of preference: the profile whose `Path=` matches `Default=` of an `[Install…]` section (what
+    /// modern Firefox actually uses), the `[ProfileN]` flagged `Default=1`, a profile named "default".
     nonisolated static func parseProfiles(from iniContent: String) -> [String] {
         var names: [String] = []
-        var inProfileSection = false
+        var pathToName: [String: String] = [:]
+        var installDefaults: [String] = []
+        var flaggedDefault: String?
+
+        enum Section { case profile, install, other }
+        var section = Section.other
+        var name: String?
+        var path: String?
+        var isFlagged = false
+
+        func finishProfile() {
+            if section == .profile, let name, !name.isEmpty {
+                if !names.contains(name) { names.append(name) }
+                if let path, pathToName[path] == nil { pathToName[path] = name }
+                if isFlagged, flaggedDefault == nil { flaggedDefault = name }
+            }
+            name = nil
+            path = nil
+            isFlagged = false
+        }
+
         for line in iniContent.components(separatedBy: .newlines) {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
-                let section = trimmed.dropFirst().dropLast()
-                inProfileSection = section.hasPrefix("Profile")
-                    && !section.dropFirst("Profile".count).isEmpty
-                    && section.dropFirst("Profile".count).allSatisfy(\.isNumber)
-            } else if inProfileSection, trimmed.hasPrefix("Name=") {
-                let name = String(trimmed.dropFirst(5))
-                if !name.isEmpty, !names.contains(name) {
-                    names.append(name)
+                finishProfile()
+                let header = trimmed.dropFirst().dropLast()
+                let suffix = header.dropFirst("Profile".count)
+                if header.hasPrefix("Profile") && !suffix.isEmpty && suffix.allSatisfy(\.isNumber) {
+                    section = .profile
+                } else if header.hasPrefix("Install") {
+                    section = .install
+                } else {
+                    section = .other
                 }
+            } else if section == .profile {
+                if trimmed.hasPrefix("Name=") {
+                    name = String(trimmed.dropFirst(5))
+                } else if trimmed.hasPrefix("Path=") {
+                    path = String(trimmed.dropFirst(5))
+                } else if trimmed == "Default=1" {
+                    isFlagged = true
+                }
+            } else if section == .install, trimmed.hasPrefix("Default=") {
+                installDefaults.append(String(trimmed.dropFirst(8)))
             }
         }
+        finishProfile()
+
+        let defaultName = installDefaults.lazy.compactMap { pathToName[$0] }.first
+            ?? flaggedDefault
+            ?? (names.contains("default") ? "default" : nil)
         let others = names
-            .filter { $0 != "default" }
+            .filter { $0 != defaultName }
             .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-        return names.contains("default") ? ["default"] + others : others
+        return defaultName.map { [$0] + others } ?? others
     }
 
     nonisolated static func buildAppBundle(version: String, profile: String, in directory: URL) {
