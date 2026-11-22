@@ -35,8 +35,10 @@
 
 ## Code quality
 
-8. **The version-filter tests don't test the real code.** `filterVersions(from:)` is only used by
+8. ✅ **The version-filter tests don't test the real code.** `filterVersions(from:)` is only used by
    tests; the app uses `loadVersions()`, which repeats the logic separately.
+   *Fixed: `loadVersions(in:)` now only walks the folder and hands the found paths to
+   `filterVersions(from:)`; tests also run `loadVersions(in:)` on a temporary folder.*
 9. **Firefox is only looked for in `/Applications`**; `~/Applications` is ignored. The `Minefield`
    prefix is long obsolete.
 10. **Launching goes through `/usr/bin/open`.** `NSWorkspace.openApplication(at:configuration:)` with

@@ -91,6 +91,26 @@ final class FirefoxManagerTests: XCTestCase {
         XCTAssertEqual(FirefoxManager.filterVersions(from: input), ["Firefox 120", "Firefox 90", "Minefield"])
     }
 
+    func testFilterVersionsUsesLastPathComponentOfNestedPaths() {
+        let input = ["Firefox Versions/Firefox 90.app", "Firefox 120.app"]
+        XCTAssertEqual(FirefoxManager.filterVersions(from: input), ["Firefox 120", "Firefox 90"])
+    }
+
+    func testLoadVersionsScansDirectory() throws {
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? fm.removeItem(at: dir) }
+        for path in ["Firefox.app/Contents", "Firefox Versions/Firefox 90.app/Contents",
+                     "Safari.app/Contents", "Utilities/Firefox 80.app/Contents"] {
+            try fm.createDirectory(at: dir.appendingPathComponent(path), withIntermediateDirectories: true)
+        }
+        XCTAssertEqual(FirefoxManager.loadVersions(in: dir.path), ["Firefox", "Firefox 90"])
+    }
+
+    func testLoadVersionsReturnsEmptyForMissingDirectory() {
+        XCTAssertEqual(FirefoxManager.loadVersions(in: "/nonexistent-\(UUID().uuidString)"), [])
+    }
+
     func testBuildAppBundleCreatesExpectedFiles() throws {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)

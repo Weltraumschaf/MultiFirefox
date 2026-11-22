@@ -18,10 +18,14 @@ final class FirefoxManager: ObservableObject {
             && name.hasSuffix(".app")
     }
 
+    /// Turns paths relative to the applications folder into sorted version names.
+    ///
+    /// Entries that are not Firefox app bundles are dropped. For nested paths such as
+    /// `Firefox Versions/Firefox 90.app` the name is taken from the last path component.
     nonisolated static func filterVersions(from names: [String]) -> [String] {
         names
             .filter { isFirefoxApp($0) }
-            .map { String($0.dropLast(4)) }
+            .map { String(($0 as NSString).lastPathComponent.dropLast(4)) }
             .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
@@ -115,21 +119,22 @@ open -na "/Applications/\(version).app" --args -no-remote -P "\(profile)"
         }
     }
 
-    nonisolated static func loadVersions() -> [String] {
-        guard let enumerator = FileManager.default.enumerator(atPath: applicationsPath) else {
+    /// Scans `directory` for Firefox app bundles, descending only into Firefox-named folders.
+    nonisolated static func loadVersions(in directory: String = applicationsPath) -> [String] {
+        guard let enumerator = FileManager.default.enumerator(atPath: directory) else {
             return []
         }
-        var result: [String] = []
+        var candidates: [String] = []
         while let name = enumerator.nextObject() as? String {
             let lower = name.lowercased()
             if isFirefoxApp(name) {
-                result.append(String((name as NSString).lastPathComponent.dropLast(4)))
+                candidates.append(name)
                 enumerator.skipDescendants()
             } else if !(lower.hasPrefix("firefox") || lower.hasPrefix("minefield")) {
                 enumerator.skipDescendants()
             }
         }
-        return result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        return filterVersions(from: candidates)
     }
 
     /// Reads profile names from the given `profiles.ini`.
